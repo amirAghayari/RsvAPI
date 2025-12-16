@@ -7,20 +7,22 @@ import {
 } from "typeorm";
 import { User } from "./user.entity";
 import { Event } from "./event.entity";
+import { ReservationStatus } from "../utils/reservation.status";
 
-export enum ReservationStatus {
-  PENDING = "pending",
-  PAID = "paid",
-  CANCELED = "canceled",
+// TODO
+export interface TicketDetail {
+  name: string;
+  family: string;
+  mobile: string;
+  picture: string;
 }
-
 @Entity("reservations")
 export class Reservation {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ type: "integer" })
-  numberOfTickets: number;
+  ticketCount: number;
 
   @Column({
     type: "enum",
@@ -29,8 +31,8 @@ export class Reservation {
   })
   status: ReservationStatus;
 
-  @Column({ type: "jsonb" }) // for array of {name, family, mobile, nationalCardPhotoPath}
-  ticketDetails: any; // بهتره interface تعریف کنی: Array<{name: string, family: string, mobile: string, nationalCardPhoto: string}>
+  @Column({ type: "jsonb" }) // for array of {name, family, mobile, picture}
+  ticketDetails: TicketDetail[];
 
   @ManyToOne(() => User, (user) => user.reservations)
   @JoinColumn({ name: "userId" })

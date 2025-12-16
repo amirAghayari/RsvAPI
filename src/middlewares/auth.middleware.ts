@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken, AuthPayload } from "../utils/jwt";
 
+// TODO:
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
+    email?: string;
+    name?: string;
   };
 }
 
@@ -23,7 +26,7 @@ export function authenticate(
   try {
     const payload = verifyAccessToken(token) as AuthPayload;
 
-    req.user = { id: payload.userId };
+    req.user = { id: payload.userId, email: payload.email, name: payload.name };
 
     next();
   } catch (err) {

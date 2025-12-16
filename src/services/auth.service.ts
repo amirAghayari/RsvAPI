@@ -27,6 +27,8 @@ export class AuthService {
       .createQueryBuilder("user")
       .addSelect("user.password")
       .addSelect("user.refreshToken")
+      .addSelect("user.email")
+      .addSelect("user.name")
       .where("user.email = :email", { email })
       .getOne();
 
@@ -35,7 +37,7 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new Error("INCORRECT_PASSWORD");
 
-    const payload = { userId: user.id };
+    const payload = { userId: user.id, name: user.name, email: user.email };
     const accessToken = signAccessToken(payload);
     const refreshToken = signRefreshToken(payload);
 

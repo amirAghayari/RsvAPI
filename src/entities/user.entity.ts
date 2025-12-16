@@ -10,6 +10,7 @@ import {
 import { Reservation } from "./reservation.entity";
 import bcrypt from "bcryptjs";
 
+// TODO : use gen salt rounds from env
 const SALT_ROUNDS = 10;
 
 @Entity("users")

@@ -3,8 +3,11 @@ import * as dotenv from "dotenv";
 import AppDataSource from "./config/dataSource";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger";
-import authRouter from "./controllers/auth.controller";
+
 import { authenticate } from "./middlewares/auth.middleware";
+import AuthRouter from "./routes/auth.routes";
+import ReservationRouter from "./routes/reservation.routes";
+import EventRouter from "./routes/event.routes";
 
 dotenv.config();
 
@@ -23,11 +26,14 @@ app.get("/", (_req, res) => {
 
 // auth routes
 
-app.use("/auth", authRouter);
+app.use("/auth", AuthRouter);
+app.use("/reservations", ReservationRouter);
+app.use("/events", EventRouter);
 
 // protected example
 app.get("/me", authenticate, (req, res) => {
   const user = (req as any).user;
+  console.log("Authenticated user:", user);
   res.json({ id: user.id });
 });
 

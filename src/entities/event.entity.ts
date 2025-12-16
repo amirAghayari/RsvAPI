@@ -15,6 +15,9 @@ export class Event {
   @Column({ type: "integer" })
   remainingTickets: number;
 
+  @Column({ type: "integer", default: 0 })
+  blockedTickets: number;
+
   @Column({ type: "timestamp" })
   executionDate: Date;
 
