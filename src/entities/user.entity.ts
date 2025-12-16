@@ -23,12 +23,11 @@ export class User {
   @Column()
   name: string;
 
-  // do not select password by default
   @Column({ select: false })
   password: string;
 
-  // store hashed refresh token (not selected by default)
-  @Column({ nullable: true, select: false })
+  // store hashed refresh token
+  @Column({ type: "text", nullable: true, select: false })
   refreshToken: string | null;
 
   @CreateDateColumn()

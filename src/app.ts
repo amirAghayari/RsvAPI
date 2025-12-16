@@ -1,6 +1,10 @@
 import express from "express";
 import * as dotenv from "dotenv";
 import AppDataSource from "./config/dataSource";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./swagger";
+import authRouter from "./controllers/auth.controller";
+import { authenticate } from "./middlewares/auth.middleware";
 
 dotenv.config();
 
@@ -9,13 +13,15 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
+// Swagger UI
+// TODO :
+app.use("/api", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.get("/", (_req, res) => {
   res.send("Hello from Ticket Reservation API!");
 });
 
 // auth routes
-import authRouter from "./controllers/auth.controller";
-import { authenticate } from "./middlewares/auth.middleware";
 
 app.use("/auth", authRouter);
 

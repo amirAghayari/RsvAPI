@@ -8,24 +8,13 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 
-const PASSWORD_REGEX = /^(?=.{8,}$)(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]+$/;
-
 export class AuthService {
-  private userRepo: Repository<User>;
-
-  constructor() {
-    this.userRepo = AppDataSource.getRepository(User);
+  private get userRepo(): Repository<User> {
+    return AppDataSource.getRepository(User);
   }
-
   async register(email: string, name: string, password: string) {
-    if (!PASSWORD_REGEX.test(password)) {
-      throw new Error(
-        "Password must be at least 8 chars, contain upper and lower letters and a number, and only letters and digits"
-      );
-    }
-
     const existing = await this.userRepo.findOne({ where: { email } });
-    if (existing) throw new Error("Email already in use");
+    if (existing) throw new Error("EMAIL_ALREADY_EXISTS");
 
     const user = this.userRepo.create({ email, name, password });
     await this.userRepo.save(user);
@@ -41,10 +30,10 @@ export class AuthService {
       .where("user.email = :email", { email })
       .getOne();
 
-    if (!user) throw new Error("Invalid credentials");
+    if (!user) throw new Error("USER_NOT_FOUND");
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new Error("Invalid credentials");
+    if (!valid) throw new Error("INCORRECT_PASSWORD");
 
     const payload = { userId: user.id };
     const accessToken = signAccessToken(payload);
