@@ -8,10 +8,7 @@ import {
   BeforeUpdate,
 } from "typeorm";
 import { Reservation } from "./reservation.entity";
-import bcrypt from "bcryptjs";
-
-// TODO : use gen salt rounds from env
-const SALT_ROUNDS = 10;
+import bcrypt, { genSalt } from "bcryptjs";
 
 @Entity("users")
 export class User {
@@ -40,10 +37,13 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
+    const saltRound = parseInt(process.env.BYCRYPT_SALT_ROUNDS || "10");
+    const salt = await genSalt(saltRound);
+
     if (this.password) {
       const isHashed = /^\$2[aby]\$\d{2}\$/.test(this.password);
       if (!isHashed) {
-        this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+        this.password = await bcrypt.hash(this.password, salt);
       }
     }
   }

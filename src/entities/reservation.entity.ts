@@ -8,14 +8,8 @@ import {
 import { User } from "./user.entity";
 import { Event } from "./event.entity";
 import { ReservationStatus } from "../utils/reservation.status";
+import { TicketOwner } from "../utils/ticketOwner.interface";
 
-// TODO
-export interface TicketDetail {
-  name: string;
-  family: string;
-  mobile: string;
-  picture: string;
-}
 @Entity("reservations")
 export class Reservation {
   @PrimaryGeneratedColumn("uuid")
@@ -32,7 +26,7 @@ export class Reservation {
   status: ReservationStatus;
 
   @Column({ type: "jsonb" }) // for array of {name, family, mobile, picture}
-  ticketDetails: TicketDetail[];
+  ticketOwner: TicketOwner[];
 
   @ManyToOne(() => User, (user) => user.reservations)
   @JoinColumn({ name: "userId" })

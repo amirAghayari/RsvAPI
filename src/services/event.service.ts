@@ -1,19 +1,7 @@
 import { Repository, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
 import { Event } from "../entities/event.entity";
 import AppDataSource from "../config/dataSource";
-
-// TODO : نامگذاری بهتر
-
-// TODO : اسنترفیس
-export interface EventListItem {
-  id: string;
-  name: string;
-  totalCapacity: number;
-  remainingTickets: number;
-  executionDate: Date;
-  salesStartTime: Date;
-  buyButtonAvailable: boolean;
-}
+import { IEvent } from "../utils/eventItems.interface";
 
 export class EventService {
   private eventRepository: Repository<Event>;
@@ -21,8 +9,7 @@ export class EventService {
   constructor() {
     this.eventRepository = AppDataSource.getRepository(Event);
   }
-
-  async findAllEvents(): Promise<EventListItem[]> {
+  async findAllEvents(): Promise<IEvent[]> {
     const now = new Date();
 
     const events = await this.eventRepository.find({
@@ -38,8 +25,8 @@ export class EventService {
         "executionDate",
         "salesStartTime",
       ],
-      // TODO : ببین اوردر برای چیه
       order: {
+        // Sort events by execution date in ascending order (earliest events first)
         executionDate: "ASC",
       },
     });

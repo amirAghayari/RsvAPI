@@ -5,13 +5,7 @@ import { Reservation } from "../entities/reservation.entity";
 import { Event } from "../entities/event.entity";
 import AppDataSource from "../config/dataSource";
 import { ReservationSchema } from "../schemas/reservation.schema";
-
-// TODO
-export interface TicketDetailItem {
-  fullName: string;
-  phoneNumber: string;
-  picture: string;
-}
+import { TicketOwner } from "../utils/ticketOwner.interface";
 
 export class ReservationService {
   private eventRepository: Repository<Event>;
@@ -53,7 +47,7 @@ export class ReservationService {
         throw new Error("TICKET_SALES_NOT_STARTED");
       }
 
-      const ticketDetails: TicketDetailItem[] = await Promise.all(
+      const ticketOwner: TicketOwner[] = await Promise.all(
         validation.details.map(async (detail, index) => {
           const file = files[index];
           const fileUrl = await this.uploadService.uploadFile(
@@ -74,7 +68,7 @@ export class ReservationService {
         eventId: event.id,
         ticketCount: validation.ticketCount,
         status: ReservationStatus.PENDING,
-        ticketDetails: ticketDetails,
+        ticketOwner,
         createdAt: new Date(),
       });
 

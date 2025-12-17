@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { ReservationSchema } from "../schemas/reservation.schema";
 import { ReservationService } from "../services/reservation.service";
 
-// TODO
 interface AuthenticatedRequest extends Request {
   user?: { id: string; email?: string; name?: string };
 }

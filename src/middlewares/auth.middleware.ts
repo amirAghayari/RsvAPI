@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken, AuthPayload } from "../utils/jwt";
 
-// TODO:
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
