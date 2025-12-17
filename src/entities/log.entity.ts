@@ -12,7 +12,7 @@ export class Log {
   action: string; // 'reserve', 'cancel', 'pay'
 
   @Column("uuid", { nullable: true })
-  eventId: string;
+  eventId: string | null;
 
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   timestamp: Date;

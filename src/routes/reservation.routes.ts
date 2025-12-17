@@ -18,4 +18,19 @@ router.post(
   reservationController.createReservation
 );
 
+// TODO : بررسی
+router.get("/my", authenticate, reservationController.getMyReservations);
+
+router.patch(
+  "/:reservationId/cancel",
+  authenticate,
+  reservationController.cancelReservation
+);
+
+router.patch(
+  "/:reservationId/pay",
+  authenticate,
+  reservationController.payReservation
+);
+
 export default router;

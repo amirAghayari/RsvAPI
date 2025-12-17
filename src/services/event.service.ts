@@ -32,12 +32,7 @@ export class EventService {
     });
 
     return events.map((event) => ({
-      id: event.id,
-      name: event.name,
-      totalCapacity: event.totalCapacity,
-      remainingTickets: event.remainingTickets,
-      executionDate: event.executionDate,
-      salesStartTime: event.salesStartTime,
+      ...event,
       buyButtonAvailable: event.remainingTickets > 0,
     }));
   }

@@ -14,6 +14,6 @@ export class TicketDetails {
   @Column()
   picture: string;
 
-  @ManyToOne(() => Reservation, (reservation) => reservation.ticketDetails)
+  @ManyToOne(() => Reservation, (reservation) => reservation.ticketOwner)
   reservation: Reservation;
 }
