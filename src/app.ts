@@ -3,12 +3,13 @@ import * as dotenv from "dotenv";
 import AppDataSource from "./config/dataSource";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger";
-import { authenticate } from "./middlewares/auth.middleware";
 import AuthRouter from "./routes/auth.routes";
 import ReservationRouter from "./routes/reservation.routes";
 import EventRouter from "./routes/event.routes";
 import LogRouter from "./routes/log.routes";
 import rateLimit from "express-rate-limit";
+
+// TODO : اضاقه کردن ای ان وی ها و..
 
 dotenv.config();
 
@@ -55,9 +56,7 @@ AppDataSource.initialize()
     console.log("Database connected!");
     app.listen(port, () => {
       console.log(`Server running on http://localhost:${port}`);
-      console.log(
-        `Swagger docs available at http://localhost:${port}/api-docs`
-      );
+      console.log(`Swagger docs available at http://localhost:${port}/docs`);
     });
   })
   .catch((error: unknown) => console.log("DB connection error:", error));

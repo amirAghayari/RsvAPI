@@ -8,6 +8,7 @@ import AppDataSource from "../config/dataSource";
 import { ReservationSchema } from "../schemas/reservation.schema";
 import { TicketOwner } from "../utils/ticketOwner.interface";
 import LogService from "./log.service";
+import { AppError } from "../controllers/reservation.controller";
 
 // TODO : بررسی
 export class ReservationService {
@@ -17,7 +18,7 @@ export class ReservationService {
     this.uploadService = new UploadService();
   }
 
-  // Helper برای دسترسی امن به ریپازیتوری
+  // TODO : بقیه رو هم اینطوری کن
   private get repo() {
     return {
       event: AppDataSource.getRepository(Event),
@@ -26,165 +27,6 @@ export class ReservationService {
     };
   }
 
-  /** ایجاد رزرو جدید */
-  async createReservation(
-    userId: string,
-    validation: ReservationSchema,
-    files: Express.Multer.File[]
-  ): Promise<Reservation> {
-    if (files.length !== validation.ticketCount) {
-      throw new Error("File count must match ticket count.");
-    }
-
-    // 1. آپلود فایل‌ها قبل از شروع تراکنش (جلوگیری از قفل طولانی دیتابیس)
-    // نکته: اگر تراکنش شکست بخورد، فایل‌های آپلود شده "یتیم" می‌شوند که باید توسط یک CronJob پاک شوند
-    // یا اینجا در بلوک catch حذف شوند.
-    const uploadedImages = await Promise.all(
-      files.map((file) =>
-        this.uploadService.uploadFile(file.buffer, file.originalname)
-      )
-    );
-
-    const ticketOwner: TicketOwner[] = validation.details.map(
-      (detail, index) => ({
-        fullName: detail.fullName,
-        phoneNumber: detail.phoneNumber,
-        picture: uploadedImages[index], // فرض بر تطابق ایندکس (بهتر است مکانیزم دقیق‌تری داشته باشید)
-      })
-    );
-
-    let savedReservation: Reservation;
-
-    try {
-      // 2. شروع تراکنش دیتابیس
-      savedReservation = await AppDataSource.manager.transaction(
-        async (entityManager: EntityManager) => {
-          const eventRepo = entityManager.getRepository(Event);
-          const reservationRepo = entityManager.getRepository(Reservation);
-
-          // قفل pessimistic
-          const event = await eventRepo
-            .createQueryBuilder("event")
-            .setLock("pessimistic_write")
-            .where("event.id = :id", { id: validation.eventId })
-            .getOne();
-
-          if (!event) throw new Error("EVENT_NOT_FOUND");
-
-          // بررسی‌های منطقی
-          if (event.remainingTickets < validation.ticketCount) {
-            throw new Error("NOT_ENOUGH_TICKETS");
-          }
-          if (new Date() < event.salesStartTime) {
-            throw new Error("TICKET_SALES_NOT_STARTED");
-          }
-
-          // ایجاد آبجکت رزرو
-          const reservation = reservationRepo.create({
-            userId,
-            eventId: event.id,
-            ticketCount: validation.ticketCount,
-            status: ReservationStatus.PENDING,
-            ticketOwner,
-            createdAt: new Date(),
-          });
-
-          // کاهش موجودی
-          event.remainingTickets -= validation.ticketCount;
-
-          // ذخیره‌سازی اتمیک
-          await eventRepo.save(event);
-          return await reservationRepo.save(reservation);
-        }
-      );
-    } catch (error) {
-      // TODO: در اینجا می‌توان فایل‌های آپلود شده را حذف کرد تا فضای سرور اشغال نشود
-      throw error;
-    }
-
-    // 3. لاگ‌گیری (Fire and Forget یا جدا از تراکنش اصلی)
-    // عدم استفاده از await یا هندل کردن خطای آن تاثیری روی خرید کاربر نگذارد
-    this.logActionSafe(userId, LogAction.RESERVE, savedReservation);
-
-    return savedReservation;
-  }
-
-  async getUserReservations(
-    userId: string,
-    take: number = 20,
-    skip: number = 0
-  ): Promise<Reservation[]> {
-    return this.repo.reservation.find({
-      where: { userId },
-      relations: ["event"],
-      select: {
-        id: true,
-        ticketCount: true,
-        status: true,
-        ticketOwner: true,
-        createdAt: true,
-        event: {
-          id: true,
-          name: true,
-          executionDate: true,
-        },
-      },
-      order: { createdAt: "DESC" },
-      take,
-      skip,
-    });
-  }
-
-  async updateReservationStatus(
-    reservationId: string,
-    userId: string,
-    newStatus: ReservationStatus
-  ): Promise<Reservation> {
-    const result = await AppDataSource.manager.transaction(
-      async (entityManager) => {
-        const reservationRepo = entityManager.getRepository(Reservation);
-        const eventRepo = entityManager.getRepository(Event);
-
-        const reservation = await reservationRepo.findOne({
-          where: { id: reservationId, userId },
-          relations: ["event"], // برای دسترسی به eventId
-        });
-
-        if (!reservation) throw new Error("RESERVATION_NOT_FOUND");
-        if (reservation.status !== ReservationStatus.PENDING) {
-          throw new Error("CAN_ONLY_MODIFY_PENDING_RESERVATIONS");
-        }
-
-        // اگر کنسل شد، موجودی را برگردان
-        if (newStatus === ReservationStatus.CANCELED) {
-          const event = await eventRepo
-            .createQueryBuilder("event")
-            .setLock("pessimistic_write") // قفل برای جلوگیری از Race Condition در بازگشت موجودی
-            .where("event.id = :id", { id: reservation.eventId })
-            .getOne();
-
-          if (event) {
-            event.remainingTickets += reservation.ticketCount;
-            await eventRepo.save(event);
-          }
-        }
-
-        reservation.status = newStatus;
-        return await reservationRepo.save(reservation);
-      }
-    );
-
-    // لاگ‌گیری خارج از تراکنش
-    const action =
-      newStatus === ReservationStatus.CANCELED
-        ? LogAction.CANCEL
-        : LogAction.PAY;
-    this.logActionSafe(userId, action, result);
-
-    return result;
-  }
-
-  // متد کمکی برای لاگ امن
   private async logActionSafe(
     userId: string,
     action: LogAction,
@@ -202,10 +44,151 @@ export class ReservationService {
         reservation.status,
         { ticketCount: reservation.ticketCount, reservationId: reservation.id }
       );
-    } catch (e) {
-      console.error("Failed to create log:", e);
-      // خطا را پرتاب نمی‌کنیم تا روند اصلی مختل نشود
+    } catch (err) {
+      console.error("Failed to create log:", err);
     }
+  }
+
+  async createReservation(
+    userId: string,
+    validation: ReservationSchema,
+    files: Express.Multer.File[]
+  ): Promise<Reservation> {
+    if (files.length !== validation.ticketCount) {
+      throw new AppError("File count must match ticket count.", 400);
+    }
+
+    const uploadedImages = await Promise.all(
+      files.map((file) =>
+        this.uploadService.uploadFile(file.buffer, file.originalname)
+      )
+    );
+
+    const ticketOwner: TicketOwner[] = validation.details.map(
+      (detail, index) => ({
+        fullName: detail.fullName,
+        phoneNumber: detail.phoneNumber,
+        picture: uploadedImages[index],
+      })
+    );
+
+    return await AppDataSource.transaction(async (manager) => {
+      const eventRepo = manager.getRepository(Event);
+      const reservationRepo = manager.getRepository(Reservation);
+
+      const event = await eventRepo
+        .createQueryBuilder("event")
+        .setLock("pessimistic_write")
+        .where("event.id = :id", { id: validation.eventId })
+        .getOne();
+
+      if (!event) throw new AppError("EVENT_NOT_FOUND", 404);
+      if (new Date() < event.salesStartTime)
+        throw new AppError("SALES_NOT_STARTED", 409);
+
+      const userCurrentTickets = await reservationRepo
+        .createQueryBuilder("r")
+        .where("r.userId = :userId", { userId })
+        .andWhere("r.eventId = :eventId", { eventId: validation.eventId })
+        .andWhere("r.status IN (:...statuses)", {
+          statuses: ["pending", "paid"],
+        })
+        .select("SUM(r.ticketCount)", "sum")
+        .getRawOne();
+
+      const current = Number(userCurrentTickets.sum || 0);
+      if (current + validation.ticketCount > 3) {
+        throw new AppError("MAX_TICKETS_PER_USER_EXCEEDED", 400);
+      }
+
+      if (
+        event.remainingTickets - event.blockedTickets <
+        validation.ticketCount
+      ) {
+        throw new AppError("NOT_ENOUGH_TICKETS", 409);
+      }
+
+      event.blockedTickets += validation.ticketCount;
+      await eventRepo.save(event);
+
+      const reservation = reservationRepo.create({
+        userId,
+        eventId: validation.eventId,
+        ticketCount: validation.ticketCount,
+        ticketOwner,
+        status: ReservationStatus.PENDING,
+      });
+
+      const saved = await reservationRepo.save(reservation);
+
+      await this.logActionSafe(userId, LogAction.RESERVE, saved);
+
+      return saved;
+    });
+  }
+
+  async getUserReservations(userId: string) {
+    return await this.repo.reservation.find({
+      where: { userId },
+      relations: ["event"],
+      select: {
+        id: true,
+        ticketCount: true,
+        ticketOwner: true,
+        status: true,
+        createdAt: true,
+        event: {
+          id: true,
+          name: true,
+          executionDate: true,
+        },
+      },
+    });
+  }
+
+  async updateReservationStatus(
+    reservationId: string,
+    userId: string,
+    newStatus: ReservationStatus
+  ): Promise<Reservation> {
+    return await AppDataSource.transaction(async (manager) => {
+      const reservationRepo = manager.getRepository(Reservation);
+      const eventRepo = manager.getRepository(Event);
+
+      const reservation = await reservationRepo.findOne({
+        where: { id: reservationId, userId },
+        relations: ["event"],
+      });
+
+      if (!reservation) throw new AppError("RESERVATION_NOT_FOUND", 404);
+      if (reservation.status !== ReservationStatus.PENDING) {
+        throw new AppError("CAN_ONLY_MODIFY_PENDING_RESERVATIONS", 400);
+      }
+
+      if (newStatus === ReservationStatus.PAID) {
+        reservation.status = newStatus;
+      } else if (newStatus === ReservationStatus.CANCELED) {
+        const event = await eventRepo
+          .createQueryBuilder("event")
+          .setLock("pessimistic_write")
+          .where("event.id = :id", { id: reservation.eventId })
+          .getOne();
+
+        if (event) {
+          event.blockedTickets -= reservation.ticketCount;
+          await eventRepo.save(event);
+        }
+        reservation.status = newStatus;
+      }
+
+      const result = await reservationRepo.save(reservation);
+      await this.logActionSafe(
+        userId,
+        newStatus === ReservationStatus.PAID ? LogAction.PAY : LogAction.CANCEL,
+        result
+      );
+      return result;
+    });
   }
 }
 

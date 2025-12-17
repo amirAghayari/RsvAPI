@@ -18,7 +18,6 @@ router.post(
   reservationController.createReservation
 );
 
-// TODO : بررسی
 router.get("/my", authenticate, reservationController.getMyReservations);
 
 router.patch(

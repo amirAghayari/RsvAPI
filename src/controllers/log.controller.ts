@@ -15,7 +15,9 @@ export class LogController {
           : undefined,
       };
 
-      const logs = await LogService.getLogs(filters);
+      const page = Number(req.query.page) || 1;
+      const limit = Number(req.query.limit) || 20;
+      const logs = await LogService.getLogs({ ...filters, page, limit });
       return res.json(logs);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });

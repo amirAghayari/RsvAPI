@@ -37,7 +37,9 @@ export class LogService {
     status?: string;
     fromDate?: string; // ISO string
     toDate?: string; // ISO string
-    minSoldTickets?: number; // n
+    minSoldTickets?: number;
+    page?: number;
+    limit?: number;
   }): Promise<Log[]> {
     const query = this.logRepository.createQueryBuilder("log");
 
@@ -46,26 +48,20 @@ export class LogService {
         userEmail: `%${filters.userEmail}%`,
       });
     }
-
     if (filters.eventId) {
       query.andWhere("log.eventId = :eventId", { eventId: filters.eventId });
     }
-
     if (filters.status) {
       query.andWhere("log.status = :status", { status: filters.status });
     }
-
     if (filters.fromDate) {
       query.andWhere("log.timestamp >= :fromDate", {
         fromDate: filters.fromDate,
       });
     }
-
     if (filters.toDate) {
       query.andWhere("log.timestamp <= :toDate", { toDate: filters.toDate });
     }
-
-    // برای فیلتر minSoldTickets: جوین با event و چک فروش
     if (filters.minSoldTickets !== undefined) {
       query
         .innerJoin(Event, "event", "event.id = log.eventId")
@@ -73,6 +69,11 @@ export class LogService {
           minSold: filters.minSoldTickets,
         });
     }
+
+    const page = filters.page || 1;
+    const limit = filters.limit || 20;
+
+    query.skip((page - 1) * limit).take(limit);
 
     return query.orderBy("log.timestamp", "DESC").getMany();
   }

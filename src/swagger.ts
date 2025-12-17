@@ -4,384 +4,462 @@ const swaggerSpec = {
     title: "Ticket Reservation API",
     version: "1.0.0",
     description:
-      "API documentation for the Ticket Reservation service, including user authentication, event listing, and concurrent ticket reservation.",
+      "Complete API for a ticket reservation system with JWT authentication, concurrent reservation management, system logging, and full OpenAPI documentation.",
   },
-  servers: [{ url: "http://localhost:3000" }],
-
+  servers: [
+    {
+      url: "http://localhost:3000",
+      description: "Local development server",
+    },
+  ],
   components: {
     securitySchemes: {
       bearerAuth: {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
+        description: "Access token obtained from /auth/login or /auth/refresh",
       },
     },
-
     schemas: {
-      User: {
+      ErrorResponse: {
         type: "object",
         properties: {
-          id: {
-            type: "string",
-            format: "uuid",
-            example: "27b2c7c4-490e-48d0-8ac3-aed2613439d2",
-          },
-          email: {
-            type: "string",
-            format: "email",
-            example: "user@example.com",
-          },
-          name: { type: "string", example: "Ali Rezaei" },
+          message: { type: "string", example: "Bad request" },
         },
       },
-
-      RegisterRequest: {
+      UserResponse: {
         type: "object",
-        required: ["email", "name", "password"],
         properties: {
+          id: { type: "string", format: "uuid" },
           email: { type: "string", format: "email" },
           name: { type: "string" },
-          password: { type: "string" },
         },
       },
-
-      LoginRequest: {
-        type: "object",
-        required: ["email", "password"],
-        properties: {
-          email: { type: "string", format: "email" },
-          password: { type: "string" },
-        },
-      },
-
-      Tokens: {
+      TokensResponse: {
         type: "object",
         properties: {
           accessToken: { type: "string" },
           refreshToken: { type: "string" },
         },
       },
-
-      RefreshRequest: {
-        type: "object",
-        required: ["refreshToken"],
-        properties: {
-          refreshToken: { type: "string" },
-        },
-      },
-
-      LogoutRequest: {
-        type: "object",
-        required: ["userId"],
-        properties: {
-          userId: { type: "string", format: "uuid" },
-        },
-      },
-
-      ErrorResponse: {
-        type: "object",
-        properties: {
-          message: { type: "string" },
-        },
-      },
-
-      EventListItem: {
+      EventResponse: {
         type: "object",
         properties: {
           id: { type: "string", format: "uuid" },
-          name: { type: "string", example: "Concert A" },
-          totalCapacity: { type: "integer", example: 500 },
-          remainingTickets: { type: "integer", example: 150 },
-          executionDate: {
-            type: "string",
-            format: "date-time",
-            example: "2024-12-31T20:00:00Z",
-            description: "Event execution date and time.",
-          },
-          salesStartTime: {
-            type: "string",
-            format: "date-time",
-            example: "2024-11-01T10:00:00Z",
-            description: "Ticket sales start date and time.",
-          },
+          name: { type: "string" },
+          totalCapacity: { type: "integer" },
+          remainingTickets: { type: "integer" },
+          executionDate: { type: "string", format: "date-time" },
+          salesStartTime: { type: "string", format: "date-time" },
+          buyButtonAvailable: { type: "boolean" },
         },
       },
-
-      TicketDetailItem: {
+      TicketOwner: {
         type: "object",
-        required: ["fullName", "phoneNumber"],
         properties: {
-          fullName: { type: "string", example: "Ali Ahmadi" },
-          phoneNumber: { type: "string", example: "09121234567" },
+          fullName: { type: "string" },
+          phoneNumber: { type: "string" },
+          picture: { type: "string", format: "url" },
         },
       },
-
-      CreateReservationRequest: {
+      ReservationResponse: {
         type: "object",
-        required: ["eventId", "ticketCount", "details", "nationalCardPictures"],
         properties: {
-          eventId: {
-            type: "string",
-            format: "uuid",
-            description: "ID of the event to reserve tickets for.",
-          },
-          ticketCount: {
-            type: "integer",
-            minimum: 1,
-            maximum: 3,
-            description: "Number of tickets to reserve (minimum 1, maximum 3).",
-          },
-          details: {
-            type: "string",
-            description:
-              "JSON string containing an array of ticket holder details. The array length must match ticketCount.",
-            example: JSON.stringify([
-              { fullName: "Ali Ahmadi", phoneNumber: "09121234567" },
-            ]),
-          },
-          nationalCardPictures: {
+          id: { type: "string", format: "uuid" },
+          ticketCount: { type: "integer" },
+          ticketOwners: {
             type: "array",
-            description:
-              "Array of national ID card images. One image is required per ticket.",
-            items: {
-              type: "string",
-              format: "binary",
-            },
-            minItems: 1,
-            maxItems: 3,
-          },
-        },
-      },
-
-      ReservationCreatedResponse: {
-        type: "object",
-        properties: {
-          message: {
-            type: "string",
-            example: "Reservation created successfully. Awaiting payment.",
-          },
-          reservationId: {
-            type: "string",
-            format: "uuid",
+            items: { $ref: "#/components/schemas/TicketOwner" },
           },
           status: {
             type: "string",
             enum: ["pending", "paid", "canceled"],
           },
+          createdAt: { type: "string", format: "date-time" },
+          event: {
+            type: "object",
+            properties: {
+              id: { type: "string", format: "uuid" },
+              name: { type: "string" },
+              executionDate: { type: "string", format: "date-time" },
+            },
+          },
+        },
+      },
+      LogResponse: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          userEmail: { type: "string" },
+          action: { type: "string", enum: ["reserve", "pay", "cancel"] },
+          eventId: { type: "string", format: "uuid", nullable: true },
+          timestamp: { type: "string", format: "date-time" },
+          status: { type: "string" },
+          details: { type: "object", nullable: true },
+        },
+      },
+    },
+    responses: {
+      BadRequest: {
+        description: "Validation error or invalid input",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
+        },
+      },
+      Unauthorized: {
+        description: "Authentication failed or invalid token",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
+        },
+      },
+      Forbidden: {
+        description: "Access forbidden (admin only)",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
         },
       },
     },
   },
-
   paths: {
     "/auth/register": {
       post: {
-        summary: "Register a new user",
+        summary: "User registration",
         requestBody: {
           required: true,
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/RegisterRequest" },
+              schema: {
+                type: "object",
+                required: ["email", "name", "password"],
+                properties: {
+                  email: { type: "string", format: "email" },
+                  name: { type: "string", minLength: 2 },
+                  password: {
+                    type: "string",
+                    description:
+                      "At least 8 characters, must contain at least one lowercase letter, one uppercase letter, and one digit",
+                  },
+                },
+              },
             },
           },
         },
         responses: {
           "201": {
-            description: "User successfully created.",
+            description: "User registered successfully",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/User" },
+                schema: { $ref: "#/components/schemas/UserResponse" },
               },
             },
           },
-          "400": {
-            description: "Bad Request",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
+          "400": { $ref: "#/components/responses/BadRequest" },
         },
       },
     },
-
     "/auth/login": {
       post: {
-        summary: "Authenticate user and return access tokens",
+        summary: "User login",
         requestBody: {
           required: true,
           content: {
             "application/json": {
-              schema: { $ref: "#/components/schemas/LoginRequest" },
-            },
-          },
-        },
-        responses: {
-          "200": {
-            description: "Authentication successful.",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Tokens" },
-              },
-            },
-          },
-          "400": {
-            description: "Invalid credentials",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
-    },
-
-    "/auth/refresh": {
-      post: {
-        summary: "Refresh access and refresh tokens",
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/RefreshRequest" },
-            },
-          },
-        },
-        responses: {
-          "200": {
-            description: "Tokens refreshed successfully.",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Tokens" },
-              },
-            },
-          },
-          "401": {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
-    },
-
-    "/me": {
-      get: {
-        summary: "Retrieve current authenticated user information",
-        security: [{ bearerAuth: [] }],
-        responses: {
-          "200": {
-            description: "User information retrieved successfully.",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/User" },
-              },
-            },
-          },
-          "401": {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
-    },
-
-    "/events": {
-      get: {
-        summary: "Retrieve list of all available events",
-        responses: {
-          "200": {
-            description: "List of events retrieved successfully.",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/EventListItem" },
+              schema: {
+                type: "object",
+                required: ["email", "password"],
+                properties: {
+                  email: { type: "string", format: "email" },
+                  password: { type: "string" },
                 },
               },
             },
           },
-          "500": {
-            description: "Internal Server Error",
+        },
+        responses: {
+          "200": {
+            description: "Access and refresh tokens",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                schema: { $ref: "#/components/schemas/TokensResponse" },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+    },
+    "/auth/refresh": {
+      post: {
+        summary: "Refresh access token",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["refreshToken"],
+                properties: {
+                  refreshToken: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "New tokens",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/TokensResponse" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+    },
+    "/events": {
+      get: {
+        summary: "Get list of available events",
+        responses: {
+          "200": {
+            description: "Array of events",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/EventResponse" },
+                },
               },
             },
           },
         },
       },
+      post: {
+        summary: "Create new event (admin only)",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: [
+                  "name",
+                  "capacity",
+                  "executionDate",
+                  "salesStartTime",
+                ],
+                properties: {
+                  name: { type: "string" },
+                  capacity: { type: "integer" },
+                  executionDate: { type: "string", format: "date-time" },
+                  salesStartTime: { type: "string", format: "date-time" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Event created",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/EventResponse" },
+              },
+            },
+          },
+          "403": { $ref: "#/components/responses/Forbidden" },
+        },
+      },
     },
-
     "/reservations": {
       post: {
-        summary: "Create a new ticket reservation (maximum 3 tickets)",
+        summary: "Create a new reservation (max 3 tickets)",
+        description:
+          "Multipart/form-data request. The 'details' field must be a JSON string. Upload one picture per ticket holder using the field name 'pictures'.",
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
           content: {
             "multipart/form-data": {
               schema: {
-                $ref: "#/components/schemas/CreateReservationRequest",
+                type: "object",
+                required: ["eventId", "ticketCount", "details", "pictures"],
+                properties: {
+                  eventId: { type: "string", format: "uuid" },
+                  ticketCount: { type: "integer", minimum: 1, maximum: 3 },
+                  details: {
+                    type: "string",
+                    description:
+                      "JSON array of ticket holder details (as string)",
+                    example:
+                      '[{"fullName": "John Doe", "phoneNumber": "09123456789"}]',
+                  },
+                  pictures: {
+                    type: "array",
+                    items: { type: "string", format: "binary" },
+                    description: "National ID card images (one per ticket)",
+                  },
+                },
               },
             },
           },
         },
         responses: {
           "201": {
-            description:
-              "Reservation created successfully and is pending payment.",
+            description: "Reservation created (status: pending)",
             content: {
               "application/json": {
                 schema: {
-                  $ref: "#/components/schemas/ReservationCreatedResponse",
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    data: {
+                      type: "object",
+                      properties: {
+                        reservationId: { type: "string", format: "uuid" },
+                      },
+                    },
+                  },
                 },
               },
             },
           },
-          "400": {
-            description: "Bad Request (validation error)",
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": { description: "Event not found" },
+          "409": { description: "Not enough tickets or sales not started" },
+        },
+      },
+    },
+    "/reservations/my": {
+      get: {
+        summary: "Get current user's reservations",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of user's reservations",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/ReservationResponse" },
+                },
               },
             },
           },
-          "401": {
-            description: "Unauthorized",
+          "401": { $ref: "#/components/responses/Unauthorized" },
+        },
+      },
+    },
+    "/reservations/{reservationId}/pay": {
+      patch: {
+        summary: "Mark reservation as paid",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "reservationId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reservation paid successfully",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                schema: { $ref: "#/components/schemas/ReservationResponse" },
               },
             },
           },
-          "409": {
-            description:
-              "Conflict due to insufficient tickets or concurrent reservation.",
+          "400": { description: "Only pending reservations can be paid" },
+          "404": { description: "Reservation not found" },
+        },
+      },
+    },
+    "/reservations/{reservationId}/cancel": {
+      patch: {
+        summary: "Cancel reservation",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "reservationId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reservation canceled and tickets released",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                schema: { $ref: "#/components/schemas/ReservationResponse" },
               },
             },
           },
-          "404": {
-            description:
-              "Event not found or ticket sales have not started yet.",
+          "400": { description: "Only pending reservations can be canceled" },
+          "404": { description: "Reservation not found" },
+        },
+      },
+    },
+    "/logs": {
+      get: {
+        summary: "System logs (admin only)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: "userEmail", in: "query", schema: { type: "string" } },
+          {
+            name: "eventId",
+            in: "query",
+            schema: { type: "string", format: "uuid" },
+          },
+          { name: "status", in: "query", schema: { type: "string" } },
+          {
+            name: "fromDate",
+            in: "query",
+            schema: { type: "string", format: "date-time" },
+          },
+          {
+            name: "toDate",
+            in: "query",
+            schema: { type: "string", format: "date-time" },
+          },
+          { name: "minSoldTickets", in: "query", schema: { type: "integer" } },
+          {
+            name: "page",
+            in: "query",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: { type: "integer", default: 20 },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Filtered logs",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/LogResponse" },
+                },
               },
             },
           },
+          "403": { $ref: "#/components/responses/Forbidden" },
         },
       },
     },
