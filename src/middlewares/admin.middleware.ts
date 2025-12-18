@@ -6,7 +6,7 @@ interface AuthRequest extends Request {
   };
 }
 export function isAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  // we can set admin in user entity : Role based access control
+  // we can set admin in user entity : Role based access control => in entity role : USER || ADMIN and the logic
   const adminEmail = process.env.ADMIN_EMAIL;
   const userEmail = req.user?.email;
   if (userEmail !== adminEmail) {

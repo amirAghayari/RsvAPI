@@ -7,8 +7,6 @@ interface AuthenticatedRequest extends Request {
   user?: { id: string; email?: string; name?: string };
 }
 
-// TODO : اینو به فایل جداگونه ای ببر
-
 export class ReservationController {
   constructor(private reservationService: ReservationService) {}
 

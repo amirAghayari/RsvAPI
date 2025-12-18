@@ -8,14 +8,7 @@ import ReservationRouter from "./routes/reservation.routes";
 import EventRouter from "./routes/event.routes";
 import LogRouter from "./routes/log.routes";
 import rateLimit from "express-rate-limit";
-import path from "node:path";
-import fs from "node:fs";
-import multer from "multer";
 import { AppError } from "./utils/AppError";
-
-/* -------------------------------------------------------------------------- */
-/*                                   Setup                                    */
-/* -------------------------------------------------------------------------- */
 
 dotenv.config();
 
@@ -29,28 +22,6 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/", (_req, res) => {
   res.send("Ticket Reservation API is running");
 });
-
-const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
-const NATIONAL_CARD_DIR = path.join(UPLOAD_ROOT, "national-cards");
-
-if (!fs.existsSync(NATIONAL_CARD_DIR)) {
-  fs.mkdirSync(NATIONAL_CARD_DIR, { recursive: true });
-}
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB
-  },
-  fileFilter: (_req, file, cb) => {
-    if (!file.mimetype.startsWith("image/")) {
-      return cb(new AppError("INVALID_FILE_TYPE", 400));
-    }
-    cb(null, true);
-  },
-});
-
-app.locals.upload = upload;
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

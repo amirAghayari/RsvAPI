@@ -3,6 +3,8 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { AppError } from "../utils/AppError";
 
+//  we can upload file with cloudinary , aws s3
+
 const UPLOAD_ROOT = path.join(process.cwd(), "uploads");
 const NATIONAL_CARD_DIR = path.join(UPLOAD_ROOT, "national-cards");
 

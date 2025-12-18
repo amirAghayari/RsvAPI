@@ -11,6 +11,7 @@ const router = Router();
 
 router.get("/", eventController.findAll);
 
+// create event by admin
 router.post("/", authenticate, isAdmin, eventController.create);
 
 export default router;

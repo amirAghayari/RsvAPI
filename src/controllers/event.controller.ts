@@ -14,13 +14,9 @@ export class EventController {
     }
   };
 
-  // TODO:
-  // 💡 متد ادمین: برای تزریق داده اولیه
   create = async (req: Request, res: Response): Promise<Response> => {
-    // 💡 در یک سناریوی واقعی، این روت باید با میدل‌ور ادمین محافظت شود.
     try {
       const data = req.body;
-      // فرض می‌کنیم اعتبارسنجی ورودی انجام شده است
       const newEvent = await this.eventService.createEvent(data);
       return res.status(201).json(newEvent);
     } catch (error: any) {

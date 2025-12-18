@@ -24,10 +24,6 @@ export class ReservationService {
     this.userRepo = AppDataSource.getRepository(User);
   }
 
-  /* -------------------------------------------------------------------------- */
-  /*                                   Helpers                                  */
-  /* -------------------------------------------------------------------------- */
-
   private async logActionSafe(
     userId: string,
     action: LogAction,
@@ -74,10 +70,6 @@ export class ReservationService {
       throw new AppError("MAX_TICKETS_PER_USER_EXCEEDED", 400);
     }
   }
-
-  /* -------------------------------------------------------------------------- */
-  /*                                Create                                     */
-  /* -------------------------------------------------------------------------- */
 
   async createReservation(
     userId: string,
@@ -148,10 +140,6 @@ export class ReservationService {
       throw err;
     }
   }
-
-  /* -------------------------------------------------------------------------- */
-  /*                             Update Status                                  */
-  /* -------------------------------------------------------------------------- */
 
   async updateReservationStatus(
     reservationId: string,

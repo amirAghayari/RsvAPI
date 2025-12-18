@@ -10,6 +10,7 @@ import path from "node:path";
 const reservationService = new ReservationService();
 const reservationController = new ReservationController(reservationService);
 
+// get files by multer
 const storage = multer.diskStorage({
   destination: function (_req, _file, cb) {
     const uploadPath = path.join(
