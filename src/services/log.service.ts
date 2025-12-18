@@ -4,7 +4,6 @@ import AppDataSource from "../config/dataSource";
 import { Event } from "../entities/event.entity";
 import { LogAction } from "../utils/reservation.status";
 
-// TODO : بررسی
 export class LogService {
   private logRepository: Repository<Log>;
   private eventRepository: Repository<Event>;

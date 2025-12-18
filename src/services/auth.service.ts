@@ -7,6 +7,7 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt";
+import { AppError } from "../utils/AppError";
 
 export class AuthService {
   private get userRepo(): Repository<User> {
@@ -67,10 +68,10 @@ export class AuthService {
         .where("user.id = :id", { id: userId })
         .getOne();
 
-      if (!user || !user.refreshToken) throw new Error("Invalid token");
+      if (!user || !user.refreshToken) throw new AppError("INVALID_TOKEN", 401);
 
       const valid = await bcrypt.compare(refreshToken, user.refreshToken);
-      if (!valid) throw new Error("Invalid token");
+      if (!valid) throw new AppError("INVALID_TOKEN", 401);
 
       const newPayload = { userId: user.id, role: user.role };
       const accessToken = signAccessToken(newPayload);
@@ -81,7 +82,7 @@ export class AuthService {
 
       return { accessToken, refreshToken: newRefreshToken };
     } catch (err) {
-      throw new Error("Invalid token");
+      throw new AppError("INVALID_TOKEN", 401);
     }
   }
 
