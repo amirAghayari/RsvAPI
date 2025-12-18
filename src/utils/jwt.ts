@@ -2,6 +2,7 @@ import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 
 export interface AuthPayload extends JwtPayload {
   userId: string;
+  role: "user" | "admin";
 }
 
 if (!process.env.JWT_ACCESS_SECRET) {

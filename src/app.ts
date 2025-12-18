@@ -35,6 +35,10 @@ app.use("/auth", AuthRouter);
 app.use("/reservations", ReservationRouter);
 app.use("/events", EventRouter);
 app.use("/logs", LogRouter);
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  console.error("RAW ERROR 👉", err);
+  res.status(500).json({ message: "DEBUG_ERROR" });
+});
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);

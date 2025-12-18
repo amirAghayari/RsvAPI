@@ -6,6 +6,7 @@ interface AuthenticatedRequest extends Request {
     id: string;
     email?: string;
     name?: string;
+    role: "user" | "admin";
   };
 }
 
@@ -25,7 +26,12 @@ export function authenticate(
   try {
     const payload = verifyAccessToken(token) as AuthPayload;
 
-    req.user = { id: payload.userId, email: payload.email, name: payload.name };
+    req.user = {
+      id: payload.userId,
+      email: payload.email,
+      name: payload.name,
+      role: payload.role,
+    };
 
     next();
   } catch (err) {

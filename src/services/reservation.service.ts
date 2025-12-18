@@ -150,11 +150,15 @@ export class ReservationService {
       const reservationRepo = manager.getRepository(Reservation);
       const eventRepo = manager.getRepository(Event);
 
-      const reservation = await reservationRepo.findOne({
-        where: { id: reservationId, userId },
-        relations: ["event"],
-        lock: { mode: "pessimistic_write" },
-      });
+      const reservation = await reservationRepo
+        .createQueryBuilder("reservation")
+        .innerJoinAndSelect("reservation.event", "event")
+        .where("reservation.id = :id AND reservation.userId = :userId", {
+          id: reservationId,
+          userId,
+        })
+        .setLock("pessimistic_write")
+        .getOne();
 
       if (!reservation) throw new AppError("RESERVATION_NOT_FOUND", 404);
       if (reservation.status !== ReservationStatus.PENDING) {

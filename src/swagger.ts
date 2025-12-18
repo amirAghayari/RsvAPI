@@ -4,7 +4,7 @@ const swaggerSpec = {
     title: "Ticket Reservation API",
     version: "1.0.0",
     description:
-      "Complete API for a ticket reservation system with JWT authentication, concurrent reservation management, system logging, and full OpenAPI documentation.",
+      "A standard, scalable, and secure API for a ticket reservation system capable of managing users and concurrent ticket reservations.",
   },
   servers: [
     {
@@ -60,8 +60,30 @@ const swaggerSpec = {
         properties: {
           fullName: { type: "string" },
           phoneNumber: { type: "string" },
-          picture: { type: "string", format: "url" },
         },
+      },
+      CreateReservationRequest: {
+        type: "object",
+        properties: {
+          eventId: { type: "string", format: "uuid" },
+          ticketCount: {
+            type: "string",
+            description:
+              "Must be a string representation of a number between 1 and 3 (e.g., '1', '2', '3')",
+          },
+          details: {
+            type: "string",
+            description:
+              'JSON stringified array of ticket owner details, e.g., [{"fullName":"John Doe","phoneNumber":"+989123456789"}, ...]',
+          },
+          pictures: {
+            type: "array",
+            items: { type: "string", format: "binary" },
+            description:
+              "Array of image files (jpg/png), number must match ticketCount",
+          },
+        },
+        required: ["eventId", "ticketCount", "details", "pictures"],
       },
       ReservationResponse: {
         type: "object",
@@ -71,7 +93,14 @@ const swaggerSpec = {
           status: { type: "string", enum: ["pending", "paid", "canceled"] },
           ticketOwner: {
             type: "array",
-            items: { $ref: "#/components/schemas/TicketOwner" },
+            items: {
+              type: "object",
+              properties: {
+                fullName: { type: "string" },
+                phoneNumber: { type: "string" },
+                picture: { type: "string" },
+              },
+            },
           },
           createdAt: { type: "string", format: "date-time" },
           event: {
@@ -96,16 +125,15 @@ const swaggerSpec = {
           details: { type: "object" },
         },
       },
-      CreateReservationRequest: {
+      CreateEventRequest: {
         type: "object",
         properties: {
-          eventId: { type: "string", format: "uuid" },
-          ticketCount: { type: "integer", minimum: 1, maximum: 3 },
-          details: {
-            type: "array",
-            items: { $ref: "#/components/schemas/TicketOwner" },
-          },
+          name: { type: "string" },
+          capacity: { type: "integer" },
+          executionDate: { type: "string", format: "date-time" },
+          salesStartTime: { type: "string", format: "date-time" },
         },
+        required: ["name", "capacity", "executionDate", "salesStartTime"],
       },
       RegisterRequest: {
         type: "object",
@@ -114,6 +142,7 @@ const swaggerSpec = {
           email: { type: "string", format: "email" },
           password: { type: "string" },
         },
+        required: ["name", "email", "password"],
       },
       LoginRequest: {
         type: "object",
@@ -121,17 +150,27 @@ const swaggerSpec = {
           email: { type: "string", format: "email" },
           password: { type: "string" },
         },
+        required: ["email", "password"],
       },
       RefreshRequest: {
         type: "object",
         properties: {
           refreshToken: { type: "string" },
         },
+        required: ["refreshToken"],
       },
     },
     responses: {
+      Unauthorized: {
+        description: "Unauthorized",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+          },
+        },
+      },
       Forbidden: {
-        description: "Forbidden",
+        description: "Forbidden (Admin only)",
         content: {
           "application/json": {
             schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -143,7 +182,7 @@ const swaggerSpec = {
   paths: {
     "/auth/register": {
       post: {
-        summary: "Register a new user",
+        summary: "User registration",
         requestBody: {
           required: true,
           content: {
@@ -162,7 +201,7 @@ const swaggerSpec = {
             },
           },
           "400": {
-            description: "Bad request",
+            description: "Input error (duplicate email or invalid password)",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -174,7 +213,7 @@ const swaggerSpec = {
     },
     "/auth/login": {
       post: {
-        summary: "Login user",
+        summary: "User login",
         requestBody: {
           required: true,
           content: {
@@ -193,7 +232,7 @@ const swaggerSpec = {
             },
           },
           "400": {
-            description: "Invalid credentials",
+            description: "Input error (wrong email or password)",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -205,7 +244,7 @@ const swaggerSpec = {
     },
     "/auth/refresh": {
       post: {
-        summary: "Refresh access token",
+        summary: "Refresh token",
         requestBody: {
           required: true,
           content: {
@@ -216,7 +255,7 @@ const swaggerSpec = {
         },
         responses: {
           "200": {
-            description: "New tokens issued",
+            description: "New tokens",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/TokensResponse" },
@@ -224,7 +263,237 @@ const swaggerSpec = {
             },
           },
           "401": {
-            description: "Invalid refresh token",
+            description: "Invalid token",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/reservations": {
+      post: {
+        summary:
+          "Create a new reservation with ticket details and national card images",
+        description:
+          "Creates a reservation. ticketCount must be a number between 1 and 3. details must be an array with length equal to ticketCount. Images are handled separately via Multer.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                allOf: [
+                  { $ref: "#/components/schemas/CreateReservationRequest" },
+                  {
+                    type: "object",
+                    properties: {
+                      pictures: {
+                        type: "array",
+                        items: {
+                          type: "string",
+                          format: "binary",
+                        },
+                        description: "National card images (handled by Multer)",
+                      },
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Reservation created successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    data: {
+                      type: "object",
+                      properties: {
+                        reservationId: { type: "string", format: "uuid" },
+                        status: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description:
+              "Invalid input or mismatch between ticketCount and details",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "409": {
+            description: "Not enough tickets available or sales not started",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+
+    "/reservations/my": {
+      get: {
+        summary: "Get user's reservations",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "List of user's reservations",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    data: {
+                      type: "array",
+                      items: {
+                        $ref: "#/components/schemas/ReservationResponse",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/reservations/{reservationId}/cancel": {
+      patch: {
+        summary: "Cancel a reservation",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "reservationId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "ID of the reservation to cancel",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reservation canceled successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    data: { $ref: "#/components/schemas/ReservationResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Only pending reservations can be canceled",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": {
+            description: "Reservation not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/reservations/{reservationId}/pay": {
+      patch: {
+        summary: "Pay for a reservation",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "reservationId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "ID of the reservation to pay",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Reservation paid successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string" },
+                    data: { $ref: "#/components/schemas/ReservationResponse" },
+                  },
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Only pending reservations can be paid",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "404": {
+            description: "Reservation not found",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "500": {
+            description: "Internal server error",
             content: {
               "application/json": {
                 schema: { $ref: "#/components/schemas/ErrorResponse" },
@@ -236,7 +505,9 @@ const swaggerSpec = {
     },
     "/events": {
       get: {
-        summary: "Get all events",
+        summary: "Get list of events",
+        description:
+          "Returns available events with buy button if tickets remain",
         responses: {
           "200": {
             description: "List of events",
@@ -266,15 +537,7 @@ const swaggerSpec = {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  name: { type: "string" },
-                  capacity: { type: "integer" },
-                  executionDate: { type: "string", format: "date-time" },
-                  salesStartTime: { type: "string", format: "date-time" },
-                },
-              },
+              schema: { $ref: "#/components/schemas/CreateEventRequest" },
             },
           },
         },
@@ -287,6 +550,7 @@ const swaggerSpec = {
               },
             },
           },
+          "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
           "500": {
             description: "Internal server error",
@@ -299,171 +563,60 @@ const swaggerSpec = {
         },
       },
     },
-    "/reservations": {
-      post: {
-        summary: "Create reservation",
-        security: [{ bearerAuth: [] }],
-        requestBody: {
-          required: true,
-          content: {
-            "multipart/form-data": {
-              schema: {
-                type: "object",
-                properties: {
-                  eventId: { type: "string", format: "uuid" },
-                  ticketCount: { type: "integer" },
-                  details: {
-                    type: "array",
-                    items: { $ref: "#/components/schemas/TicketOwner" },
-                  },
-                  pictures: {
-                    type: "array",
-                    items: { type: "string", format: "binary" },
-                  },
-                },
-              },
-            },
-          },
-        },
-        responses: {
-          "201": {
-            description: "Reservation created",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ReservationResponse" },
-              },
-            },
-          },
-          "400": {
-            description: "Invalid request",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-          "409": {
-            description: "Not enough tickets or sales not started",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
-    },
-    "/reservations/my": {
-      get: {
-        summary: "Get my reservations",
-        security: [{ bearerAuth: [] }],
-        responses: {
-          "200": {
-            description: "List of reservations",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/ReservationResponse" },
-                },
-              },
-            },
-          },
-          "401": {
-            description: "Unauthorized",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ErrorResponse" },
-              },
-            },
-          },
-        },
-      },
-    },
-    "/reservations/{reservationId}/cancel": {
-      patch: {
-        summary: "Cancel reservation",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "reservationId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Reservation canceled and tickets released",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ReservationResponse" },
-              },
-            },
-          },
-          "400": { description: "Only pending reservations can be canceled" },
-          "404": { description: "Reservation not found" },
-        },
-      },
-    },
-    "/reservations/{reservationId}/pay": {
-      patch: {
-        summary: "Pay reservation",
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "reservationId",
-            in: "path",
-            required: true,
-            schema: { type: "string", format: "uuid" },
-          },
-        ],
-        responses: {
-          "200": {
-            description: "Reservation paid",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ReservationResponse" },
-              },
-            },
-          },
-          "400": { description: "Only pending reservations can be paid" },
-          "404": { description: "Reservation not found" },
-        },
-      },
-    },
     "/logs": {
       get: {
         summary: "Get system logs (admin only)",
+        description:
+          "Filter logs by user email, event ID, status, date range, min sold tickets, with pagination",
         security: [{ bearerAuth: [] }],
         parameters: [
-          { name: "userEmail", in: "query", schema: { type: "string" } },
+          {
+            name: "userEmail",
+            in: "query",
+            schema: { type: "string" },
+            description: "Filter by user email (partial match)",
+          },
           {
             name: "eventId",
             in: "query",
             schema: { type: "string", format: "uuid" },
+            description: "Filter by event ID",
           },
-          { name: "status", in: "query", schema: { type: "string" } },
+          {
+            name: "status",
+            in: "query",
+            schema: { type: "string" },
+            description: "Filter by status (pending, paid, canceled)",
+          },
           {
             name: "fromDate",
             in: "query",
             schema: { type: "string", format: "date-time" },
+            description: "Filter logs from this date (ISO format)",
           },
           {
             name: "toDate",
             in: "query",
             schema: { type: "string", format: "date-time" },
+            description: "Filter logs up to this date (ISO format)",
           },
-          { name: "minSoldTickets", in: "query", schema: { type: "integer" } },
+          {
+            name: "minSoldTickets",
+            in: "query",
+            schema: { type: "integer" },
+            description: "Filter events with at least this many sold tickets",
+          },
           {
             name: "page",
             in: "query",
             schema: { type: "integer", default: 1 },
+            description: "Page number for pagination",
           },
           {
             name: "limit",
             in: "query",
             schema: { type: "integer", default: 20 },
+            description: "Number of logs per page",
           },
         ],
         responses: {
@@ -478,6 +631,7 @@ const swaggerSpec = {
               },
             },
           },
+          "401": { $ref: "#/components/responses/Unauthorized" },
           "403": { $ref: "#/components/responses/Forbidden" },
           "500": {
             description: "Internal server error",

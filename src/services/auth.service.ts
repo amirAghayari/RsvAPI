@@ -29,6 +29,7 @@ export class AuthService {
       .addSelect("user.refreshToken")
       .addSelect("user.email")
       .addSelect("user.name")
+      .addSelect("user.role")
       .where("user.email = :email", { email })
       .getOne();
 
@@ -37,7 +38,12 @@ export class AuthService {
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new Error("INCORRECT_PASSWORD");
 
-    const payload = { userId: user.id, name: user.name, email: user.email };
+    const payload = {
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
     const accessToken = signAccessToken(payload);
     const refreshToken = signRefreshToken(payload);
 
@@ -57,6 +63,7 @@ export class AuthService {
       const user = await this.userRepo
         .createQueryBuilder("user")
         .addSelect("user.refreshToken")
+        .addSelect("user.role")
         .where("user.id = :id", { id: userId })
         .getOne();
 
@@ -65,7 +72,7 @@ export class AuthService {
       const valid = await bcrypt.compare(refreshToken, user.refreshToken);
       if (!valid) throw new Error("Invalid token");
 
-      const newPayload = { userId: user.id };
+      const newPayload = { userId: user.id, role: user.role };
       const accessToken = signAccessToken(newPayload);
       const newRefreshToken = signRefreshToken(newPayload);
 

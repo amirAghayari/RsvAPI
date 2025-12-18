@@ -28,6 +28,13 @@ export class User {
   @Column({ type: "text", nullable: true, select: false })
   refreshToken: string | null;
 
+  @Column({
+    type: "enum",
+    enum: ["user", "admin"],
+    default: "user",
+  })
+  role: "user" | "admin";
+
   @CreateDateColumn()
   createdAt: Date;
 
