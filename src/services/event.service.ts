@@ -15,7 +15,7 @@ export class EventService {
     const events = await this.eventRepository.find({
       where: {
         salesStartTime: LessThanOrEqual(now),
-        remainingTickets: MoreThanOrEqual(1),
+        // remainingTickets: MoreThanOrEqual(1),
       },
       select: [
         "id",

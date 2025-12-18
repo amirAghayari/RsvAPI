@@ -64,8 +64,8 @@ export class LogService {
     }
     if (filters.minSoldTickets !== undefined) {
       query
-        .innerJoin(Event, "event", "event.id = log.eventId")
-        .andWhere("(event.totalCapacity - event.remainingTickets) > :minSold", {
+        .leftJoinAndSelect(Event, "event", "event.id = log.eventId")
+        .andWhere("event.soldTickets > :minSold OR log.eventId IS NULL", {
           minSold: filters.minSoldTickets,
         });
     }
