@@ -47,7 +47,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
     return res.status(err.statusCode).json({ message: err.message });
   }
 
-  res.status(500).json({ message: "Internal Server Error" });
+  return res.status(500).json({ message: "Internal Server Error" });
 });
 
 AppDataSource.initialize()

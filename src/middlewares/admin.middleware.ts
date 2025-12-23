@@ -13,5 +13,5 @@ export function isAdmin(req: AuthRequest, res: Response, next: NextFunction) {
       .json({ message: "FORBIDDEN: Admin access required" });
   }
 
-  next();
+  return next();
 }

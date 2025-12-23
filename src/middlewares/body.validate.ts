@@ -13,7 +13,7 @@ export const validateBody = (schema: any) => {
       }
 
       schema.parse(req.body);
-      next();
+      return next();
     } catch (err: any) {
       if (err instanceof ZodError) {
         return res

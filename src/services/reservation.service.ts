@@ -14,13 +14,13 @@ const MAX_TICKETS_PER_USER = 3;
 
 export class ReservationService {
   private reservationRepo: Repository<Reservation>;
-  private eventRepo: Repository<Event>;
+  // private eventRepo: Repository<Event>;
   private userRepo: Repository<User>;
   private uploadService = new UploadService();
 
   constructor() {
     this.reservationRepo = AppDataSource.getRepository(Reservation);
-    this.eventRepo = AppDataSource.getRepository(Event);
+    // this.eventRepo = AppDataSource.getRepository(Event);
     this.userRepo = AppDataSource.getRepository(User);
   }
 

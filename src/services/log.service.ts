@@ -6,11 +6,11 @@ import { LogAction } from "../utils/reservation.status";
 
 export class LogService {
   private logRepository: Repository<Log>;
-  private eventRepository: Repository<Event>;
+  // private eventRepository: Repository<Event>;
 
   constructor() {
     this.logRepository = AppDataSource.getRepository(Log);
-    this.eventRepository = AppDataSource.getRepository(Event);
+    // this.eventRepository = AppDataSource.getRepository(Event);
   }
 
   async createLog(
