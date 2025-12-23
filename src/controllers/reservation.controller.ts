@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ReservationSchema } from "../schemas/reservation.schema";
 import { ReservationService } from "../services/reservation.service";
 import { ReservationStatus } from "../utils/reservation.status";
+import { AppError } from "../utils/AppError";
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; email?: string; name?: string };
@@ -50,6 +51,11 @@ export class ReservationController {
     }
 
     try {
+      const existingReservation =
+        await this.reservationService.getUserReservations(userId);
+      if (existingReservation.length >= 3)
+        throw new AppError("MAX_RESERVATIONS_REACHED", 409);
+
       const newReservation = await this.reservationService.createReservation(
         userId,
         validation,

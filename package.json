@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "start": "ts-node-dev --respawn src/app.ts",
     "dev": "nodemon --watch src --ext ts --exec \"ts-node src/app.ts\"",
     "build": "rimraf ./dist && tsc",
     "migrate:generate": "typeorm-ts-node-commonjs migration:generate src/migrations/init -d src/config/data-source.ts",

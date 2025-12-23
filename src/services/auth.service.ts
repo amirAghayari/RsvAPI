@@ -34,10 +34,10 @@ export class AuthService {
       .where("user.email = :email", { email })
       .getOne();
 
-    if (!user) throw new Error("USER_NOT_FOUND");
+    if (!user) throw new AppError("USER_NOT_FOUND", 404);
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) throw new Error("INCORRECT_PASSWORD");
+    if (!valid) throw new AppError("INCORRECT_PASSWORD", 401);
 
     const payload = {
       userId: user.id,
