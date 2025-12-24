@@ -1,7 +1,9 @@
-import { Repository, LessThanOrEqual, MoreThanOrEqual } from "typeorm";
+import { Repository } from "typeorm";
 import { Event } from "../entities/event.entity";
 import AppDataSource from "../config/dataSource";
 import { IEvent } from "../utils/eventItems.interface";
+import { AppError } from "../utils/AppError";
+import { ReservationStatus } from "../utils/reservation.status";
 
 export class EventService {
   private eventRepository: Repository<Event>;
@@ -12,28 +14,39 @@ export class EventService {
   async findAllEvents(): Promise<IEvent[]> {
     const now = new Date();
 
-    const events = await this.eventRepository.find({
-      where: {
-        salesStartTime: LessThanOrEqual(now),
-        remainingTickets: MoreThanOrEqual(1),
-      },
-      select: [
-        "id",
-        "name",
-        "totalCapacity",
-        "remainingTickets",
-        "executionDate",
-        "salesStartTime",
-      ],
-      order: {
-        // Sort events by execution date in ascending order (earliest events first)
-        executionDate: "ASC",
-      },
-    });
+    const events = await this.eventRepository
+      .createQueryBuilder("event")
+      .leftJoin("event.reservations", "r", "r.status IN (:...statuses)", {
+        statuses: [ReservationStatus.PAID, ReservationStatus.PENDING],
+      })
+      .select([
+        "event.id AS id",
+        "event.name AS name",
+        "event.totalCapacity AS total_capacity",
+        "event.executionDate AS execution_date",
+        "event.salesStartTime AS sales_start_time",
+        `
+  GREATEST(
+    event.totalCapacity - COALESCE(SUM(r.ticketCount), 0),
+    0
+  ) AS remaining_tickets
+  `,
+      ])
+      .where("event.salesStartTime <= :now", { now })
+      .groupBy("event.id")
+      .orderBy("event.executionDate", "ASC")
+      .getRawMany();
 
-    return events.map((event) => ({
-      ...event,
-      buyButtonAvailable: event.remainingTickets > 0,
+    if (!events) throw new AppError("NO_EVENTS_FOUND", 404);
+
+    return events.map((e) => ({
+      id: e.id,
+      name: e.name,
+      totalCapacity: Number(e.total_capacity),
+      executionDate: e.execution_date,
+      salesStartTime: e.sales_start_time,
+      remainingTickets: Number(e.remaining_tickets),
+      buyButtonAvailable: Number(e.remaining_tickets) > 0,
     }));
   }
 
@@ -46,7 +59,6 @@ export class EventService {
     const event = this.eventRepository.create({
       name: data.name,
       totalCapacity: data.capacity,
-      remainingTickets: data.capacity,
       executionDate: data.executionDate,
       salesStartTime: data.salesStartTime,
     });

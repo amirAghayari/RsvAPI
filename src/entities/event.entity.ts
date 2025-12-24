@@ -12,14 +12,14 @@ export class Event {
   @Column({ type: "integer" })
   totalCapacity: number;
 
-  @Column({ type: "integer" })
-  remainingTickets: number;
+  // @Column({ type: "integer" })
+  // remainingTickets: number;
 
-  @Column({ type: "integer", default: 0 })
-  blockedTickets: number;
+  // @Column({ type: "integer", default: 0 })
+  // blockedTickets: number;
 
-  @Column({ type: "integer", default: 0 })
-  soldTickets: number;
+  // @Column({ type: "integer", default: 0 })
+  // soldTickets: number;
 
   @Column({ type: "timestamp" })
   executionDate: Date;

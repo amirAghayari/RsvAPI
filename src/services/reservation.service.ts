@@ -24,6 +24,33 @@ export class ReservationService {
     this.userRepo = AppDataSource.getRepository(User);
   }
 
+  private async calculateRemainingTickets(eventId: string): Promise<number> {
+    const eventRepo = AppDataSource.getRepository(Event);
+
+    const event = await eventRepo.findOne({
+      where: { id: eventId },
+      select: ["totalCapacity"],
+    });
+
+    if (!event) {
+      throw new AppError("EVENT_NOT_FOUND", 404);
+    }
+
+    const reservedTickets = await this.reservationRepo
+      .createQueryBuilder("r")
+      .select("COALESCE(SUM(r.ticketCount), 0)", "total")
+      .where("r.eventId = :eventId", { eventId })
+      .andWhere("r.status IN (:...statuses)", {
+        statuses: [ReservationStatus.PAID, ReservationStatus.PENDING],
+      })
+      .getRawOne();
+
+    const reservedCount = Number(reservedTickets.total);
+    const remaining = event.totalCapacity - reservedCount;
+
+    return Math.max(0, remaining);
+  }
+
   private async logActionSafe(
     userId: string,
     action: LogAction,
@@ -80,6 +107,11 @@ export class ReservationService {
       throw new AppError("FILE_COUNT_MISMATCH", 400);
     }
 
+    const remainingTickets = await this.calculateRemainingTickets(dto.eventId);
+
+    if (remainingTickets < dto.ticketCount)
+      throw new AppError("NOT_ENOUGH_TICKETS", 409);
+
     // upload BEFORE transaction
     const uploadedFiles = await this.uploadService.uploadMany(
       files,
@@ -101,8 +133,6 @@ export class ReservationService {
         if (!event) throw new AppError("EVENT_NOT_FOUND", 404);
         if (new Date() < event.salesStartTime)
           throw new AppError("SALES_NOT_STARTED", 409);
-        if (event.remainingTickets < dto.ticketCount)
-          throw new AppError("NOT_ENOUGH_TICKETS", 409);
 
         await this.validateUserTicketLimit(
           userId,
@@ -110,10 +140,6 @@ export class ReservationService {
           dto.ticketCount,
           reservationRepo
         );
-
-        event.remainingTickets -= dto.ticketCount;
-        event.blockedTickets += dto.ticketCount;
-        await eventRepo.save(event);
 
         const ticketOwner: TicketOwner[] = dto.details.map((d, i) => ({
           fullName: d.fullName,
@@ -132,7 +158,19 @@ export class ReservationService {
         const saved = await reservationRepo.save(reservation);
         await this.logActionSafe(userId, LogAction.RESERVE, saved);
 
-        return saved;
+        const updatedRemaining = await this.calculateRemainingTickets(
+          dto.eventId
+        );
+
+        await this.logActionSafe(userId, LogAction.RESERVE, saved);
+
+        return {
+          ...saved,
+          event: {
+            ...event,
+            remainingTickets: updatedRemaining,
+          },
+        } as Reservation;
       });
     } catch (err) {
       // rollback uploaded files
@@ -167,18 +205,18 @@ export class ReservationService {
 
       if (newStatus === ReservationStatus.PAID) {
         reservation.status = ReservationStatus.PAID;
-        reservation.event.blockedTickets -= reservation.ticketCount;
-        reservation.event.soldTickets += reservation.ticketCount;
       }
 
       if (newStatus === ReservationStatus.CANCELED) {
         reservation.status = ReservationStatus.CANCELED;
-        reservation.event.blockedTickets -= reservation.ticketCount;
-        reservation.event.remainingTickets += reservation.ticketCount;
       }
 
       await eventRepo.save(reservation.event);
       const result = await reservationRepo.save(reservation);
+
+      const remainingTickets = await this.calculateRemainingTickets(
+        result.eventId
+      );
 
       await this.logActionSafe(
         userId,
@@ -186,12 +224,18 @@ export class ReservationService {
         result
       );
 
-      return result;
+      return {
+        ...result,
+        event: {
+          ...result.event,
+          remainingTickets,
+        },
+      } as Reservation;
     });
   }
 
   async getUserReservations(userId: string) {
-    return this.reservationRepo.find({
+    const reservations = await this.reservationRepo.find({
       where: { userId },
       relations: ["event"],
       order: { createdAt: "DESC" },
@@ -205,9 +249,23 @@ export class ReservationService {
           id: true,
           name: true,
           executionDate: true,
+          totalCapacity: true,
         },
       },
     });
+
+    const reservationsWithRemaining = await Promise.all(
+      reservations.map(async (reservation) => {
+        return {
+          ...reservation,
+          event: {
+            ...reservation.event,
+          },
+        };
+      })
+    );
+
+    return reservationsWithRemaining;
   }
 }
 
