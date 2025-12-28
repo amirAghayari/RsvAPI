@@ -113,11 +113,13 @@ export class ReservationService {
       throw new AppError("NOT_ENOUGH_TICKETS", 409);
 
     // upload BEFORE transaction
-    const uploadedFiles = await this.uploadService.uploadMany(
-      files,
-      userId,
-      dto.eventId
-    );
+    // const uploadedFiles = await this.uploadService.uploadMany(
+    //   files,
+    //   userId,
+    //   dto.eventId
+    // );
+
+    let uploadedFiles: string[] = [];
 
     try {
       return await AppDataSource.transaction(async (manager) => {
@@ -139,6 +141,12 @@ export class ReservationService {
           dto.eventId,
           dto.ticketCount,
           reservationRepo
+        );
+
+        uploadedFiles = await this.uploadService.uploadMany(
+          files,
+          userId,
+          dto.eventId
         );
 
         const ticketOwner: TicketOwner[] = dto.details.map((d, i) => ({
@@ -173,8 +181,10 @@ export class ReservationService {
         } as Reservation;
       });
     } catch (err) {
-      // rollback uploaded files
-      await this.uploadService.removeMany(uploadedFiles);
+      if (uploadedFiles.length > 0) {
+        // rollback uploaded files
+        await this.uploadService.removeMany(uploadedFiles);
+      }
       throw err;
     }
   }
