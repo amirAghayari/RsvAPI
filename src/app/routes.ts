@@ -7,6 +7,7 @@ import EventRouter from "./../routes/event.routes";
 import LogRouter from "./../routes/log.routes";
 import rateLimit from "express-rate-limit";
 import { AppError } from "./../utils/AppError";
+import { NotFoundError } from "../errors/not-found-error";
 
 const routes = (app: Express) => {
   const loginLimiter = rateLimit({
@@ -32,10 +33,10 @@ const routes = (app: Express) => {
   app.use("/api/V1/events", EventRouter);
   app.use("/api/V1/logs", LogRouter);
 
-  // TODO : add code for not found pages :
-  //  	app.all("*", () => {
-  // throw new NotFoundError("صفحه مورد نظر یافت نشد");
-  //	});
+  //  Not found routed
+  app.all("*", () => {
+    throw new NotFoundError("The requested page was not found.");
+  });
 
   // TODO :
 
