@@ -8,6 +8,7 @@ import LogRouter from "./../routes/log.routes";
 import rateLimit from "express-rate-limit";
 import { AppError } from "./../utils/AppError";
 import { NotFoundError } from "../errors/not-found-error";
+import { errorHandler } from "../middlewares/error-handler";
 
 const routes = (app: Express) => {
   const loginLimiter = rateLimit({
@@ -49,15 +50,7 @@ const routes = (app: Express) => {
       },
     );
   }
-  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    console.error(err);
-
-    if (err instanceof AppError) {
-      return res.status(err.statusCode).json({ message: err.message });
-    }
-
-    return res.status(500).json({ message: "Internal Server Error" });
-  });
+  app.use(errorHandler);
 };
 
 export default routes;
