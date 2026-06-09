@@ -21,6 +21,9 @@ export class User {
   @Column()
   name: string;
 
+  @Column()
+  photo: string;
+
   @Column({ select: false })
   password: string;
 
