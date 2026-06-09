@@ -90,4 +90,39 @@ export default class APIFeatures<T extends ObjectLiteral> {
     }
     return this;
   }
+
+  limitFields(): this {
+    if (this.queryRequest.fields) {
+      const fields = this.queryRequest.fields.split(".");
+      this.options.select = fields as any;
+    }
+    return this;
+  }
+
+  async pagination() {
+    const countOptions: FindManyOptions<T> = { ...this.options };
+    delete countOptions.skip;
+    delete countOptions.take;
+    const total = await this.repository.count(countOptions);
+
+    const limit = parseInt(this.queryRequest.limit) || 8;
+    const page = parseInt(this.queryRequest.page) || 1;
+    const skip = (page - 1) * limit;
+    const pages = Math.ceil(total / limit);
+
+    if (this.queryRequest.page) {
+      this.options.skip = skip;
+      this.options.take = limit;
+    }
+
+    const pagination = this.queryRequest.page
+      ? { total, limit, pages, page, skip }
+      : null;
+
+    return { pagination, total, skip };
+  }
+
+  async execute(): Promise<T[]> {
+    return await this.repository.find(this.options);
+  }
 }
