@@ -7,7 +7,7 @@ import {
   BeforeInsert,
   BeforeUpdate,
 } from "typeorm";
-import { Reservation } from "./reservation.entity";
+import { Reservation } from "../../entities/reservation.entity";
 import bcrypt, { genSalt } from "bcryptjs";
 
 @Entity("users")

@@ -5,7 +5,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { User } from "./user.entity";
+import { User } from "../core/users/user.entity";
 import { Event } from "./event.entity";
 import { ReservationStatus } from "../utils/reservation.status";
 import { TicketOwner } from "../utils/ticketOwner.interface";

@@ -1,6 +1,6 @@
 import { Repository } from "typeorm";
 import AppDataSource from "../config/dataSource";
-import { User } from "../entities/user.entity";
+import { User } from "../core/users/user.entity";
 import bcrypt from "bcryptjs";
 import {
   signAccessToken,
