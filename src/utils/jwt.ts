@@ -28,7 +28,11 @@ export function signAccessToken(payload: {
   });
 }
 
-export function signRefreshToken(payload: { userId: string }) {
+export function signRefreshToken(payload: {
+  userId: string;
+  role: "user" | "admin";
+  email?: string;
+}) {
   return jwt.sign(payload, REFRESH_SECRET, {
     expiresIn: REFRESH_EXPIRES_IN as SignOptions["expiresIn"],
   });
