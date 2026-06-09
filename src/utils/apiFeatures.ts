@@ -1,6 +1,7 @@
 import {
   FindManyOptions,
   FindOptionsWhere,
+  ILike,
   LessThan,
   LessThanOrEqual,
   MoreThan,
@@ -8,6 +9,7 @@ import {
   ObjectLiteral,
   Repository,
 } from "typeorm";
+import { th } from "zod/v4/locales";
 
 export default class APIFeatures<T extends ObjectLiteral> {
   private readonly repository: Repository<T>;
@@ -22,7 +24,7 @@ export default class APIFeatures<T extends ObjectLiteral> {
     this.repository = repository;
     this.queryRequest = reqQuery;
     this.options = {
-      where: initialFilter || ({} as FindOptionsWhere<T>),
+      where: (initialFilter || {}) as FindOptionsWhere<T>,
     };
   }
 
@@ -60,6 +62,32 @@ export default class APIFeatures<T extends ObjectLiteral> {
     }
 
     this.options.where = whereCondition as FindOptionsWhere<T>;
+    return this;
+  }
+
+  search(): this {
+    if (this.queryRequest.sort) {
+      const where = (this.options.where as Record<string, any>) || {};
+      where.name = ILike(`%${this.queryRequest.search}%`);
+      this.options.where = where as unknown as FindOptionsWhere<T>;
+    }
+    return this;
+  }
+
+  sort(): this {
+    if (this.queryRequest.sort) {
+      const sortFields = this.queryRequest.sort.split(",");
+      const order: any = {};
+
+      for (const field of sortFields) {
+        const direction = field.startsWith("-") ? "DESC" : "ASC";
+        const fieldName = field.replace(/^-/, "");
+        order[fieldName] = direction;
+      }
+      this.options.order = order;
+    } else {
+      this.options.order = { createdAt: "DESC" };
+    }
     return this;
   }
 }
