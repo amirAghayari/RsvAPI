@@ -57,8 +57,8 @@ const config = (app: Express) => {
   app.use(express.urlencoded({ extended: false }));
   // Request's Cookie parser
   app.use(cookieParser());
-  // Protect against HTTP Parameter Pollution attacks
 
+  // Protect against HTTP Parameter Pollution attacks
   //TODO : Add whitelist
   app.use(
     hpp({

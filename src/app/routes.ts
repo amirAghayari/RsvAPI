@@ -8,8 +8,6 @@ import LogRouter from "./../routes/log.routes";
 import rateLimit from "express-rate-limit";
 import { AppError } from "./../utils/AppError";
 
-// TODO : rate limiter , error msg ,
-
 const routes = (app: Express) => {
   const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -27,12 +25,12 @@ const routes = (app: Express) => {
 
   // API routes
 
-  app.use("/api/auth/login", loginLimiter);
+  app.use("/api/V1/auth/login", loginLimiter);
 
-  app.use("/api/auth", AuthRouter);
-  app.use("/api/reservations", ReservationRouter);
-  app.use("/api/events", EventRouter);
-  app.use("/api/logs", LogRouter);
+  app.use("/api/V1/auth", AuthRouter);
+  app.use("/api/V1/reservations", ReservationRouter);
+  app.use("/api/V1/events", EventRouter);
+  app.use("/api/V1/logs", LogRouter);
 
   // TODO : add code for not found pages :
   //  	app.all("*", () => {
