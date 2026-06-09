@@ -1,42 +1,46 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken, AuthPayload } from "../utils/jwt";
+import { NotAuthorizedError } from "../errors/not-authorized-error";
 
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email?: string;
-    name?: string;
     role: "user" | "admin";
   };
 }
 
-export function authenticate(
+export function protect(
   req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
+  _res: Response,
+  next: NextFunction,
 ): Response | void {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res
-      .status(401)
-      .json({ message: "Unauthorized: Token missing or invalid format" });
+  // Get token from header or cookie
+  const { authorization } = req.headers;
+  let token: string | undefined = undefined;
+  if (authorization && authorization.startsWith("Bearer")) {
+    token = authorization.split(" ")[1];
+  } else if (req.cookies.jwt) token = req.cookies.jwt;
+
+  // if no token, throw an error
+  if (!token) {
+    throw new NotAuthorizedError(
+      "You are not logged in! Please log in to access.",
+    );
   }
-  const token = authHeader.split(" ")[1];
 
   try {
+    //  check if token is valid, if not throw an NotAuthorizedError
     const payload = verifyAccessToken(token) as AuthPayload;
 
     req.user = {
       id: payload.userId,
       email: payload.email,
-      name: payload.name,
       role: payload.role,
     };
 
     next();
   } catch (err) {
-    return res
-      .status(401)
-      .json({ message: "Unauthorized: Invalid or expired token" });
+    throw new NotAuthorizedError("Invalid or expired token");
   }
 }

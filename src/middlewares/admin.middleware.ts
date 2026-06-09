@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { ForbiddenError } from "../errors/forbidden-error";
 
 interface AuthRequest extends Request {
   user?: {
@@ -6,11 +7,9 @@ interface AuthRequest extends Request {
     role: "user" | "admin";
   };
 }
-export function isAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+export function isAdmin(req: AuthRequest, _res: Response, next: NextFunction) {
   if (req.user?.role !== "admin") {
-    return res
-      .status(403)
-      .json({ message: "FORBIDDEN: Admin access required" });
+    throw new ForbiddenError("FORBIDDEN: Admin access required");
   }
 
   return next();
