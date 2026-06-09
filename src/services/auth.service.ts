@@ -8,6 +8,7 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt";
 import { AppError } from "../utils/AppError";
+import { NotFoundError } from "../errors/not-found-error";
 
 export class AuthService {
   private get userRepo(): Repository<User> {
@@ -34,7 +35,7 @@ export class AuthService {
       .where("user.email = :email", { email })
       .getOne();
 
-    if (!user) throw new AppError("USER_NOT_FOUND", 404);
+    if (!user) throw new NotFoundError("USER_NOT_FOUND");
 
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) throw new AppError("INCORRECT_PASSWORD", 401);

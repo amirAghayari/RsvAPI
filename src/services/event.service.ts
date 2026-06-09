@@ -4,6 +4,7 @@ import AppDataSource from "../config/dataSource";
 import { IEvent } from "../utils/eventItems.interface";
 import { AppError } from "../utils/AppError";
 import { ReservationStatus } from "../utils/reservation.status";
+import { NotFoundError } from "../errors/not-found-error";
 
 export class EventService {
   private eventRepository: Repository<Event>;
@@ -37,7 +38,7 @@ export class EventService {
       .orderBy("event.executionDate", "ASC")
       .getRawMany();
 
-    if (!events) throw new AppError("NO_EVENTS_FOUND", 404);
+    if (!events) throw new NotFoundError("NO_EVENTS_FOUND");
 
     return events.map((e) => ({
       id: e.id,

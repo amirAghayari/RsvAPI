@@ -9,6 +9,7 @@ import { AppError } from "../utils/AppError";
 import { ReservationSchema } from "../schemas/reservation.schema";
 import { LogAction, ReservationStatus } from "../utils/reservation.status";
 import { TicketOwner } from "../utils/ticketOwner.interface";
+import { NotFoundError } from "../errors/not-found-error";
 
 const MAX_TICKETS_PER_USER = 3;
 
@@ -33,7 +34,7 @@ export class ReservationService {
     });
 
     if (!event) {
-      throw new AppError("EVENT_NOT_FOUND", 404);
+      throw new NotFoundError("EVENT_NOT_FOUND");
     }
 
     const reservedTickets = await this.reservationRepo
@@ -54,7 +55,7 @@ export class ReservationService {
   private async logActionSafe(
     userId: string,
     action: LogAction,
-    reservation: Reservation
+    reservation: Reservation,
   ) {
     try {
       const user = await this.userRepo.findOne({
@@ -70,7 +71,7 @@ export class ReservationService {
         {
           reservationId: reservation.id,
           ticketCount: reservation.ticketCount,
-        }
+        },
       );
     } catch (err) {
       console.error("LOG_FAILED", err);
@@ -81,7 +82,7 @@ export class ReservationService {
     userId: string,
     eventId: string,
     requested: number,
-    repo: Repository<Reservation>
+    repo: Repository<Reservation>,
   ) {
     const result = await repo
       .createQueryBuilder("r")
@@ -101,7 +102,7 @@ export class ReservationService {
   async createReservation(
     userId: string,
     dto: ReservationSchema,
-    files: Express.Multer.File[]
+    files: Express.Multer.File[],
   ): Promise<Reservation> {
     if (files.length !== dto.ticketCount) {
       throw new AppError("FILE_COUNT_MISMATCH", 400);
@@ -132,7 +133,7 @@ export class ReservationService {
           .where("event.id = :id", { id: dto.eventId })
           .getOne();
 
-        if (!event) throw new AppError("EVENT_NOT_FOUND", 404);
+        if (!event) throw new NotFoundError("EVENT_NOT_FOUND");
         if (new Date() < event.salesStartTime)
           throw new AppError("SALES_NOT_STARTED", 409);
 
@@ -140,13 +141,13 @@ export class ReservationService {
           userId,
           dto.eventId,
           dto.ticketCount,
-          reservationRepo
+          reservationRepo,
         );
 
         uploadedFiles = await this.uploadService.uploadMany(
           files,
           userId,
-          dto.eventId
+          dto.eventId,
         );
 
         const ticketOwner: TicketOwner[] = dto.details.map((d, i) => ({
@@ -167,7 +168,7 @@ export class ReservationService {
         await this.logActionSafe(userId, LogAction.RESERVE, saved);
 
         const updatedRemaining = await this.calculateRemainingTickets(
-          dto.eventId
+          dto.eventId,
         );
 
         await this.logActionSafe(userId, LogAction.RESERVE, saved);
@@ -192,7 +193,7 @@ export class ReservationService {
   async updateReservationStatus(
     reservationId: string,
     userId: string,
-    newStatus: ReservationStatus
+    newStatus: ReservationStatus,
   ): Promise<Reservation> {
     return AppDataSource.transaction(async (manager) => {
       const reservationRepo = manager.getRepository(Reservation);
@@ -208,7 +209,7 @@ export class ReservationService {
         .setLock("pessimistic_write")
         .getOne();
 
-      if (!reservation) throw new AppError("RESERVATION_NOT_FOUND", 404);
+      if (!reservation) throw new NotFoundError("RESERVATION_NOT_FOUND");
       if (reservation.status !== ReservationStatus.PENDING) {
         throw new AppError("INVALID_STATUS_TRANSITION", 400);
       }
@@ -225,13 +226,13 @@ export class ReservationService {
       const result = await reservationRepo.save(reservation);
 
       const remainingTickets = await this.calculateRemainingTickets(
-        result.eventId
+        result.eventId,
       );
 
       await this.logActionSafe(
         userId,
         newStatus === ReservationStatus.PAID ? LogAction.PAY : LogAction.CANCEL,
-        result
+        result,
       );
 
       return {
@@ -272,7 +273,7 @@ export class ReservationService {
             ...reservation.event,
           },
         };
-      })
+      }),
     );
 
     return reservationsWithRemaining;
