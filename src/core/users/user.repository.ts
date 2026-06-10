@@ -1,6 +1,11 @@
-import { DataSource, Repository } from "typeorm";
+import { DataSource, DeleteResult, Repository, UpdateResult } from "typeorm";
 import APIFeatures from "../../utils/apiFeatures";
 import { User } from "./user.entity";
+import { ICreateUserDto } from "./dtos/create-user.dto";
+import { IUpdateUserDto } from "./dtos/update-user.dto";
+import { NotFoundError } from "../../errors/not-found-error";
+import { IUpdateCurrentUserInfoDto } from "./dtos/update-currentuser.dto";
+import { IUpdateCurrentUserPasswordDto } from "./dtos/update-currentuser-password.dto";
 
 export class UserRepository extends Repository<User> {
   constructor(private dataSource: DataSource) {
@@ -70,4 +75,77 @@ export class UserRepository extends Repository<User> {
   /**************************************************************
    ************* @description AGGREGATE OPERATIONS **************
    **************************************************************/
+
+  async findCountByDay(
+    endDate: Date,
+    startDate?: Date,
+  ): Promise<{ count: number; date: Date }[]> {
+    const query = this.createQueryBuilder("users")
+      .select("DATE(user.createdAt) as date")
+      .addSelect("COUNT(user.ic)", "count")
+      .where("user.createdAt BETWEEN :start AND :end", {
+        start: startDate,
+        end: endDate,
+      })
+      .groupBy("DATE(user.createdAt)")
+      .orderBy("date", "ASC");
+
+    const result = await query.getRawMany();
+
+    return result.map((row) => ({
+      date: row.date,
+      count: parseInt(row.count, 10),
+    }));
+  }
+
+  /*************************************************************
+   ************* @description CREATE OPERATIONS ****************
+   *************************************************************/
+
+  async userCreate(createUserDto: ICreateUserDto): Promise<User> {
+    return this.create(createUserDto);
+  }
+
+  /************************************************************
+   ************* @description UPDATE OPERATIONS ***************
+   ************************************************************/
+
+  async userUpdate(
+    userId: string,
+    payload:
+      | IUpdateUserDto
+      | IUpdateCurrentUserInfoDto
+      | IUpdateCurrentUserPasswordDto,
+  ): Promise<User | null> {
+    const result: UpdateResult = await this.update(userId, payload);
+
+    if (result.affected === 0) {
+      throw new NotFoundError(`User with id ${userId} not found`);
+    }
+    const updatedUser = await this.findById(userId);
+    if (!updatedUser) {
+      throw new NotFoundError(`User with id ${userId} not found after update`);
+    }
+
+    return updatedUser;
+  }
+
+  /************************************************************
+   ************* @description DELETE OPERATIONS ***************
+   ************************************************************/
+
+  async deleteUser(
+    userId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const result = await this.delete(userId);
+
+    if (result.affected === 0) {
+      throw new NotFoundError(`User with id ${userId} not found`);
+    }
+
+    return {
+      success: true,
+      message: `User with id ${userId} deleted successfully`,
+    };
+  }
 }
