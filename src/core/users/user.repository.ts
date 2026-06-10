@@ -1,4 +1,4 @@
-import { DataSource, DeleteResult, Repository, UpdateResult } from "typeorm";
+import { DataSource, Repository, UpdateResult } from "typeorm";
 import APIFeatures from "../../utils/apiFeatures";
 import { User } from "./user.entity";
 import { ICreateUserDto } from "./dtos/create-user.dto";
@@ -10,6 +10,10 @@ import { IUpdateCurrentUserPasswordDto } from "./dtos/update-currentuser-passwor
 export class UserRepository extends Repository<User> {
   constructor(private dataSource: DataSource) {
     super(User, dataSource.manager);
+  }
+
+  async saveUser(user: User): Promise<User> {
+    return this.manager.save(user);
   }
 
   /********************************************************

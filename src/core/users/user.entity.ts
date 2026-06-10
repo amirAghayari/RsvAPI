@@ -8,7 +8,7 @@ import {
   BeforeUpdate,
 } from "typeorm";
 import { Reservation } from "../../entities/reservation.entity";
-import bcrypt, { genSalt } from "bcryptjs";
+import bcrypt, { compare, genSalt } from "bcryptjs";
 
 @Entity("users")
 export class User {
@@ -26,6 +26,9 @@ export class User {
 
   @Column({ select: false })
   password: string;
+
+  // This field not save in DB its only use for validation
+  passwordConfirmation: string;
 
   // store hashed refresh token
   @Column({ type: "text", nullable: true, select: false })
@@ -56,5 +59,10 @@ export class User {
         this.password = await bcrypt.hash(this.password, salt);
       }
     }
+  }
+
+  async correctPassword(plainPassword: string): Promise<boolean> {
+    if (!this.password) return false;
+    return compare(plainPassword, this.password);
   }
 }
