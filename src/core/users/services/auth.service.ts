@@ -1,4 +1,5 @@
 import { NotAuthorizedError } from "../../../errors/not-authorized-error";
+import { verifyRefreshToken } from "../../../utils/jwt";
 import { ILoginDto } from "../dtos/login.dto";
 import { ISignupDto } from "../dtos/signup.dto";
 import { UserRepository } from "../user.repository";
@@ -37,9 +38,33 @@ export class AuthService {
     if (!authenticatedUser)
       throw new NotAuthorizedError("Incorrect email or password.");
 
-    const valid = await bcrypt.compare(password, authenticatedUser.password);
+    const valid = await authenticatedUser.correctPassword(password);
     if (!valid) throw new NotAuthorizedError("INCORRECT_PASSWORD");
 
     return authenticatedUser;
   }
+
+  // TODO : forgot password
+
+  async refreshToken(refreshToken: string) {
+    if (!refreshToken) {
+      throw new NotAuthorizedError("Refresh token not provided");
+    }
+
+    const decoded = await verifyRefreshToken(refreshToken);
+
+    const user = await this.userRepository.findById(decoded.userId);
+
+    if (!user || user.refreshToken !== refreshToken) {
+      throw new NotAuthorizedError("Refresh token has expired.");
+    }
+
+    return user;
+  }
+
+  /************************************************************
+   ************* @description PATCH HANDLERS ******************
+   ************************************************************/
+
+  //  TODO : reset password
 }
