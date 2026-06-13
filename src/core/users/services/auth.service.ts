@@ -4,7 +4,6 @@ import { ILoginDto } from "../dtos/login.dto";
 import { ISignupDto } from "../dtos/signup.dto";
 import { UserRepository } from "../user.repository";
 import { UserService } from "./user.service";
-import bcrypt from "bcryptjs";
 
 export class AuthService {
   constructor(
