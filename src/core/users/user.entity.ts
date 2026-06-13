@@ -65,4 +65,18 @@ export class User {
     if (!this.password) return false;
     return compare(plainPassword, this.password);
   }
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashRefreshToken() {
+    const saltRound = parseInt(process.env.BYCRYPT_SALT_ROUNDS || "10");
+    const salt = await genSalt(saltRound);
+
+    if (this.refreshToken) {
+      const isHashed = /^\$2[aby]\$\d{2}\$/.test(this.refreshToken);
+      if (!isHashed) {
+        this.refreshToken = await bcrypt.hash(this.refreshToken, salt);
+      }
+    }
+  }
 }

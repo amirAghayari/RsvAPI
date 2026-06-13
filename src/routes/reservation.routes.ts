@@ -2,7 +2,7 @@ import { Router } from "express";
 import { authenticate } from "../middlewares/auth.middleware";
 import { ReservationController } from "../controllers/reservation.controller";
 import { ReservationService } from "../services/reservation.service";
-import { validateBody } from "../middlewares/body.validate";
+import { validateBody } from "../middlewares/validate.middleware";
 import { CreateReservationSchema } from "../schemas/reservation.schema";
 import multer from "multer";
 import path from "node:path";
@@ -18,7 +18,7 @@ const storage = multer.diskStorage({
       "..",
       "..",
       "uploads",
-      "national-cards"
+      "national-cards",
     );
     cb(null, uploadPath);
   },
@@ -49,7 +49,7 @@ router.post(
   authenticate,
   upload.array("pictures", 3),
   validateBody(CreateReservationSchema),
-  reservationController.createReservation
+  reservationController.createReservation,
 );
 
 router.get("/my", authenticate, reservationController.getMyReservations);
@@ -57,13 +57,13 @@ router.get("/my", authenticate, reservationController.getMyReservations);
 router.patch(
   "/:reservationId/cancel",
   authenticate,
-  reservationController.cancelReservation
+  reservationController.cancelReservation,
 );
 
 router.patch(
   "/:reservationId/pay",
   authenticate,
-  reservationController.payReservation
+  reservationController.payReservation,
 );
 
 export default router;

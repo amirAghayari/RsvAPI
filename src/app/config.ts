@@ -4,16 +4,18 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import ms from "ms";
+import { User } from "../core/users/user.entity";
 const cookieParser = require("cookie-parser");
 const hpp = require("hpp");
 const morgan = require("morgan");
-// declare global {
-//   namespace Express {
-//     interface Request {
-//       user: IUserDoc;
-//     }
-//   }
-// }
+
+declare global {
+  namespace Express {
+    interface Request {
+      user: User;
+    }
+  }
+}
 
 const config = (app: Express) => {
   // Development Logging

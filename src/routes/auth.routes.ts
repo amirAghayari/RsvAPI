@@ -1,5 +1,5 @@
 import express from "express";
-import { validateBody } from "../middlewares/body.validate";
+import { validateBody } from "../middlewares/validate.middleware";
 import {
   loginSchema,
   refreshSchema,
