@@ -1,20 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken, AuthPayload } from "../utils/jwt";
 import { NotAuthorizedError } from "../errors/not-authorized-error";
+import { userRepository } from "../core";
 
-interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    email?: string;
-    role: "user" | "admin";
-  };
-}
-
-export function protect(
-  req: AuthenticatedRequest,
+export async function protect(
+  req: Request,
   _res: Response,
   next: NextFunction,
-): Response | void {
+) {
   // Get token from header or cookie
   const { authorization } = req.headers;
   let token: string | undefined = undefined;
@@ -33,11 +26,14 @@ export function protect(
     //  check if token is valid, if not throw an NotAuthorizedError
     const payload = verifyAccessToken(token) as AuthPayload;
 
-    req.user = {
-      id: payload.userId,
-      email: payload.email,
-      role: payload.role,
-    };
+    const user = await userRepository.findById(payload.userId);
+
+    if (!user) {
+      const msg = "The user belonging to this token no longer exists!";
+      throw new NotAuthorizedError(msg);
+    }
+
+    req.user = user;
 
     next();
   } catch (err) {
