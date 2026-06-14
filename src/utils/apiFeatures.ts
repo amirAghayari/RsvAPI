@@ -84,9 +84,11 @@ export default class APIFeatures<T extends ObjectLiteral> {
         order[fieldName] = direction;
       }
       this.options.order = order;
-    } else {
-      this.options.order = { createdAt: "DESC" };
     }
+    //TODO
+    //  else {
+    //   this.options.order = { createdAt: "DESC" };
+    // }
     return this;
   }
 

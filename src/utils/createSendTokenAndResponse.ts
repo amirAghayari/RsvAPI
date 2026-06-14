@@ -3,7 +3,7 @@ import { User } from "../core/users/user.entity";
 import { signAccessToken, signRefreshToken } from "./jwt";
 import _ from "lodash";
 import ms, { StringValue } from "ms";
-import { getRepository } from "typeorm";
+import AppDataSource from "../config/dataSource";
 
 const createSendTokenAndResponse = async (
   user: User,
@@ -38,7 +38,7 @@ const createSendTokenAndResponse = async (
     maxAge: ms(process.env.JWT_REFRESH_COOKIE_EXPIRES_IN as StringValue),
   });
 
-  const userRepository = getRepository(User);
+  const userRepository = AppDataSource.getRepository(User);
   user.refreshToken = refreshToken;
   await userRepository.save(user);
 

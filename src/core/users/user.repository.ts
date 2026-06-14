@@ -8,7 +8,7 @@ import { IUpdateCurrentUserInfoDto } from "./dtos/update-currentuser.dto";
 import { IUpdateCurrentUserPasswordDto } from "./dtos/update-currentuser-password.dto";
 
 export class UserRepository extends Repository<User> {
-  constructor(private dataSource: DataSource) {
+  constructor(dataSource: DataSource) {
     super(User, dataSource.manager);
   }
 

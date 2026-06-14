@@ -12,7 +12,6 @@ import { createUserByAdminSchema } from "../../schemas/user-schema/createUserByA
 import { updateUserByAdminSchema } from "../../schemas/user-schema/updateUserByAdmin.schema";
 
 const router = express.Router();
-// TODO : update user routes
 
 router.post("/signup", [
   validate(signupSchema),

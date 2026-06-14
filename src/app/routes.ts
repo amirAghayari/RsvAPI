@@ -1,14 +1,13 @@
 import { Express, NextFunction, Request, Response } from "express";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./../swagger";
-import AuthRouter from "./../routes/auth.routes";
-import ReservationRouter from "./../routes/reservation.routes";
-import EventRouter from "./../routes/event.routes";
-import LogRouter from "./../routes/log.routes";
+// import ReservationRouter from "./../routes/reservation.routes";
+// import EventRouter from "./../routes/event.routes";
+// import LogRouter from "./../routes/log.routes";
 import rateLimit from "express-rate-limit";
-import { AppError } from "./../utils/AppError";
 import { NotFoundError } from "../errors/not-found-error";
 import { errorHandler } from "../middlewares/error-handler";
+import { userRouter } from "../core/users/user.routes";
 
 const routes = (app: Express) => {
   const loginLimiter = rateLimit({
@@ -27,15 +26,15 @@ const routes = (app: Express) => {
 
   // API routes
 
-  app.use("/api/V1/auth/login", loginLimiter);
+  app.use("/api/V1/users/login", loginLimiter);
 
-  app.use("/api/V1/auth", AuthRouter);
-  app.use("/api/V1/reservations", ReservationRouter);
-  app.use("/api/V1/events", EventRouter);
-  app.use("/api/V1/logs", LogRouter);
+  app.use("/api/V1/users", userRouter);
+  // app.use("/api/V1/reservations", ReservationRouter);
+  // app.use("/api/V1/events", EventRouter);
+  // app.use("/api/V1/logs", LogRouter);
 
   //  Not found routed
-  app.all("*", () => {
+  app.all("/*splat", () => {
     throw new NotFoundError("The requested page was not found.");
   });
 

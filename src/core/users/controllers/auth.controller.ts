@@ -4,7 +4,7 @@ import { ISignupDto } from "../dtos/signup.dto";
 import createSendTokenAndResponse from "../../../utils/createSendTokenAndResponse";
 import { ILoginDto } from "../dtos/login.dto";
 import { User } from "../user.entity";
-import { getRepository } from "typeorm";
+import AppDataSource from "../../../config/dataSource";
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -23,7 +23,7 @@ export class AuthController {
 
   async logout(req: Request, res: Response): Promise<void> {
     if (req.user && req.user instanceof User) {
-      const userRepo = getRepository(User);
+      const userRepo = AppDataSource.getRepository(User);
       await userRepo.update(req.user.id, {
         refreshToken: null,
       });

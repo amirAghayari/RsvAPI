@@ -1,5 +1,8 @@
 import { DataSource } from "typeorm";
 import * as dotenv from "dotenv";
+import { User } from "../core/users/user.entity";
+import { Reservation } from "../entities/reservation.entity";
+import { Event } from "../entities/event.entity";
 
 dotenv.config();
 
@@ -12,7 +15,8 @@ const AppDataSource = new DataSource({
   database: process.env.DB_NAME || "postgres",
   synchronize: true,
   logging: true,
-  entities: ["src/entities/**/*.ts"],
+  // TODO : add another entities
+  entities: [User, Reservation, Event],
   migrations: ["src/migrations/**/*.ts"],
 });
 
