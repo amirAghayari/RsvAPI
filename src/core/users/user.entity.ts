@@ -61,11 +61,6 @@ export class User {
     }
   }
 
-  async correctPassword(plainPassword: string): Promise<boolean> {
-    if (!this.password) return false;
-    return compare(plainPassword, this.password);
-  }
-
   @BeforeInsert()
   @BeforeUpdate()
   async hashRefreshToken() {
@@ -78,5 +73,10 @@ export class User {
         this.refreshToken = await bcrypt.hash(this.refreshToken, salt);
       }
     }
+  }
+
+  async correctPassword(plainPassword: string): Promise<boolean> {
+    if (!this.password) return false;
+    return compare(plainPassword, this.password);
   }
 }

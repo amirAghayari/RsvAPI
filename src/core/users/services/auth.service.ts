@@ -3,19 +3,15 @@ import { verifyRefreshToken } from "../../../utils/jwt";
 import { ILoginDto } from "../dtos/login.dto";
 import { ISignupDto } from "../dtos/signup.dto";
 import { UserRepository } from "../user.repository";
-import { UserService } from "./user.service";
 
 export class AuthService {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   /**************************************************************
    ************* @description POST HANDLERS *************
    ******************************************************/
   async signup(signupDto: ISignupDto) {
-    const exitingUser = await this.userService.findUserByEmail(signupDto.email);
+    const exitingUser = await this.userRepository.findByEmail(signupDto.email);
 
     if (exitingUser) {
       throw new Error("The user has already registered with this email.");
