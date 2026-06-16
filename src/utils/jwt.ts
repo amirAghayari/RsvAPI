@@ -1,4 +1,5 @@
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
+import ms from "ms";
 
 export interface AuthPayload extends JwtPayload {
   userId: string;
@@ -45,3 +46,24 @@ export function verifyAccessToken(token: string): AuthPayload {
 export function verifyRefreshToken(token: string): AuthPayload {
   return jwt.verify(token, REFRESH_SECRET) as AuthPayload;
 }
+
+export const getRefreshTokenTTLSeconds = (): number => {
+  const expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN || "7d";
+
+  try {
+    const milliseconds = ms(expiresIn as ms.StringValue);
+    if (milliseconds === undefined) {
+      console.warn(
+        `⚠️ Invalid REFRESH_TOKEN_EXPIRES_IN: "${expiresIn}", using default 7d`,
+      );
+      return 7 * 24 * 60 * 60;
+    }
+    return Math.floor(milliseconds / 1000);
+  } catch (error) {
+    console.error(
+      `❌ Error parsing REFRESH_TOKEN_EXPIRES_IN: "${expiresIn}"`,
+      error,
+    );
+    return 7 * 24 * 60 * 60;
+  }
+};
