@@ -8,9 +8,9 @@ import { RefreshTokenService } from "./users/services/refreshToken.service";
 
 export const userRepository = new UserRepository(AppDataSource);
 
-export const userService = new UserService(userRepository);
-export const authService = new AuthService(userRepository);
 export const refreshTokenService = new RefreshTokenService();
+export const userService = new UserService(userRepository);
+export const authService = new AuthService(userRepository, refreshTokenService);
 
 export const userController = new UserController(userService);
 export const authController = new AuthController(authService);

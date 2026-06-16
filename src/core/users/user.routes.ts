@@ -3,13 +3,13 @@ import { validate } from "../../middlewares/validate.middleware";
 import { signupSchema } from "../../schemas/user-schema/sign.shema";
 
 import { authController, userController } from "..";
-import { loginSchema } from "../../schemas/auth.schema";
 import { protect } from "../../middlewares/auth.middleware";
 import { updateMeSchema } from "../../schemas/user-schema/updateMe.schema";
 import { updateMePasswordSchema } from "../../schemas/user-schema/updateMePassword.schema";
 import { isAdmin } from "../../middlewares/admin.middleware";
 import { createUserByAdminSchema } from "../../schemas/user-schema/createUserByAdmin.schema";
 import { updateUserByAdminSchema } from "../../schemas/user-schema/updateUserByAdmin.schema";
+import { loginSchema } from "../../schemas/user-schema/login.schema";
 
 const router = express.Router();
 
