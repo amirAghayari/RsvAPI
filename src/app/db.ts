@@ -1,6 +1,7 @@
 import AppDataSource from "../config/dataSource";
+import { getRedisClient } from "../config/redisClient";
 
-const initializeDatabase = () => {
+const initializeDatabase = async () => {
   AppDataSource.initialize()
     .then(() => {
       console.log("Database connected!");
@@ -9,6 +10,8 @@ const initializeDatabase = () => {
       console.error("DB connection error:", error);
       process.exit(1);
     });
+
+  await getRedisClient();
 };
 
 export default initializeDatabase;
