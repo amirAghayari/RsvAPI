@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
 import AppDataSource from "../config/dataSource";
 import { Reservation } from "../entities/reservation.entity";
-import { Event } from "../entities/event.entity";
+import { Event } from "../core/events/event.entity";
 import { User } from "../core/users/user.entity";
 import { UploadService } from "./upload.service";
 import LogService from "./log.service";

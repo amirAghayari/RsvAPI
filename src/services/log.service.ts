@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
 import { Log } from "../entities/log.entity";
 import AppDataSource from "../config/dataSource";
-import { Event } from "../entities/event.entity";
+import { Event } from "../core/events/event.entity";
 import { LogAction } from "../utils/reservation.status";
 
 export class LogService {
@@ -18,7 +18,7 @@ export class LogService {
     action: LogAction,
     eventId: string | null,
     status: string,
-    details?: any
+    details?: any,
   ): Promise<Log> {
     const log = this.logRepository.create({
       userEmail,

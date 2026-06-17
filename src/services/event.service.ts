@@ -1,5 +1,5 @@
 import { Repository } from "typeorm";
-import { Event } from "../entities/event.entity";
+import { Event } from "../core/events/event.entity";
 import AppDataSource from "../config/dataSource";
 import { IEvent } from "../utils/eventItems.interface";
 import { AppError } from "../utils/AppError";

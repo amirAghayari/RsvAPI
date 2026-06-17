@@ -65,7 +65,7 @@ export default class APIFeatures<T extends ObjectLiteral> {
   }
 
   search(): this {
-    if (this.queryRequest.sort) {
+    if (this.queryRequest.search) {
       const where = (this.options.where as Record<string, any>) || {};
       where.name = ILike(`%${this.queryRequest.search}%`);
       this.options.where = where as unknown as FindOptionsWhere<T>;

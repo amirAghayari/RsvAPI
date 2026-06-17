@@ -8,7 +8,7 @@ import {
 import { ReservationStatus } from "../../utils/reservation.status";
 import { TicketOwner } from "../../utils/ticketOwner.interface";
 import { User } from "../users/user.entity";
-import { Event } from "../../entities/event.entity";
+import { Event } from "../events/event.entity";
 
 // TODO : reservation : update relations , structure
 @Entity("reservations")

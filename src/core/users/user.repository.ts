@@ -141,11 +141,13 @@ export class UserRepository extends Repository<User> {
   async deleteUser(
     userId: string,
   ): Promise<{ success: boolean; message: string }> {
-    const result = await this.delete(userId);
+    const user = await this.findOne({ where: { id: userId } });
 
-    if (result.affected === 0) {
+    if (!user) {
       throw new NotFoundError(`User with id ${userId} not found`);
     }
+
+    await this.remove(user);
 
     return {
       success: true,
