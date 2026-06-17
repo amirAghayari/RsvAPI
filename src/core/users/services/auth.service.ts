@@ -1,3 +1,4 @@
+import { DuplicateError } from "../../../errors/duplicate-error";
 import { NotAuthorizedError } from "../../../errors/not-authorized-error";
 import {
   AuthPayload,
@@ -22,8 +23,9 @@ export class AuthService {
     const exitingUser = await this.userRepository.findByEmail(signupDto.email);
 
     if (exitingUser) {
-      // TODO : add error
-      throw new Error("The user has already registered with this email.");
+      throw new DuplicateError(
+        "The user has already registered with this email.",
+      );
     }
 
     // return this.userService.createUser(signupDto);
