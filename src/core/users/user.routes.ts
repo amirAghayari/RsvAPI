@@ -32,22 +32,19 @@ router.post("/refresh-token", authController.refreshToken.bind(authController));
  ************************************************************************/
 router.use(protect);
 
-router.get("/get-me", userController.getCurrentUser.bind(userController));
+router
+  .route("/me")
+  .get(userController.getCurrentUser.bind(userController))
+  .patch([
+    validate(updateMeSchema),
+    userController.updateCurrentUserInfo.bind(userController),
+  ])
+  .delete(userController.deleteCurrentUser.bind(userController));
 
-router.patch("/update-me", [
-  validate(updateMeSchema),
-  userController.updateCurrentUserInfo.bind(userController),
-]);
-
-router.patch("/update-me-password", [
+router.patch("/me/update-password", [
   validate(updateMePasswordSchema),
   userController.updateCurrentUserPassword.bind(userController),
 ]);
-
-router.delete(
-  "/delete-me",
-  userController.deleteCurrentUser.bind(userController),
-);
 
 /************************************************************************
  *********  @description Restrict all routes below to admin only *********
