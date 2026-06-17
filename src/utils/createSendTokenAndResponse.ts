@@ -44,13 +44,13 @@ const createSendTokenAndResponse = async (
   });
 
   const ttlSeconds = getRefreshTokenTTLSeconds();
-  await refreshTokenService.storeRefreshToken(
+  await refreshTokenService.storeRefreshTokenInRedis(
     user.id,
     refreshToken,
     ttlSeconds,
   );
 
-  await refreshTokenService.storeRefreshTokenInDB(user, refreshToken);
+  await refreshTokenService.storeRefreshTokenInRedisInDB(user, refreshToken);
   // const userRepository = AppDataSource.getRepository(User);
   // user.refreshToken = refreshToken;
   // await userRepository.save(user);

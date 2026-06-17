@@ -11,7 +11,11 @@ const hashForRedis = (token: string): string => {
 };
 
 export class RefreshTokenService {
-  async storeRefreshToken(userId: string, token: string, ttlSecond: number) {
+  async storeRefreshTokenInRedis(
+    userId: string,
+    token: string,
+    ttlSecond: number,
+  ) {
     const client = await getRedisClient();
     const key = `${PREFIX}${userId}`;
     await client.setEx(key, ttlSecond, hashForRedis(token));
@@ -35,7 +39,7 @@ export class RefreshTokenService {
     console.log(`✅ Refresh token removed from Redis for user ${userId}`);
   }
 
-  async storeRefreshTokenInDB(user: User, token: string): Promise<void> {
+  async storeRefreshTokenInRedisInDB(user: User, token: string): Promise<void> {
     user.refreshToken = token;
     await AppDataSource.getRepository(User).save(user);
     console.log(`✅ Refresh token stored in DB for user ${user.id}`);

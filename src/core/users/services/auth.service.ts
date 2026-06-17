@@ -92,7 +92,7 @@ export class AuthService {
 
       if (isValid) {
         const ttl = getRefreshTokenTTLSeconds();
-        await this.refreshTokenService.storeRefreshToken(
+        await this.refreshTokenService.storeRefreshTokenInRedis(
           userId,
           refreshToken,
           ttl,
