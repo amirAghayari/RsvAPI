@@ -5,11 +5,12 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
-import { User } from "../core/users/user.entity";
-import { Event } from "./event.entity";
-import { ReservationStatus } from "../utils/reservation.status";
-import { TicketOwner } from "../utils/ticketOwner.interface";
+import { ReservationStatus } from "../../utils/reservation.status";
+import { TicketOwner } from "../../utils/ticketOwner.interface";
+import { User } from "../users/user.entity";
+import { Event } from "../../entities/event.entity";
 
+// TODO : reservation : update relations , structure
 @Entity("reservations")
 export class Reservation {
   @PrimaryGeneratedColumn("uuid")
