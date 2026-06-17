@@ -42,7 +42,7 @@ export class UserRepository extends Repository<User> {
     const { select, relations } = options || {};
 
     const queryOptions: any = {
-      where: { userId },
+      where: { id: userId },
     };
 
     if (select && select.length) queryOptions.select = select;

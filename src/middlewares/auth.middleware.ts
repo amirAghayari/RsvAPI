@@ -25,7 +25,6 @@ export async function protect(
   try {
     //  check if token is valid, if not throw an NotAuthorizedError
     const payload = verifyAccessToken(token) as AuthPayload;
-
     const user = await userRepository.findById(payload.userId);
 
     if (!user) {
@@ -37,6 +36,7 @@ export async function protect(
 
     next();
   } catch (err) {
+    console.log(err);
     throw new NotAuthorizedError("Invalid or expired token");
   }
 }
