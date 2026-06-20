@@ -95,12 +95,11 @@ export class UserService {
     updateUserDto: IUpdateUserDto,
   ): Promise<User | null> {
     const targetUser = await this.findUserById(userId);
-
+    if (!targetUser) {
+      throw new NotFoundError("User with this id not found. ");
+    }
     // if the user is admin, only main admin can update the user
-    if (
-      targetUser!.role === "admin" &&
-      targetUser!.email !== "admin@gmail.com"
-    ) {
+    if (targetUser!.role === "admin") {
       throw new NotAuthorizedError(
         "You cannot update the admin account. Only the system administrator can do this.",
       );
