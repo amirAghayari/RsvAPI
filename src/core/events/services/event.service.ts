@@ -3,6 +3,7 @@ import { EventRepository } from "../event.repository";
 import { Event } from "../event.entity";
 import { ICreateEventDto } from "../dtos/create-event.dto";
 import { IUpdateEventDto } from "../dtos/update-event.dto";
+import { BadRequestError } from "../../../errors/bad-request-error";
 
 export class EventService {
   constructor(private readonly eventRepository: EventRepository) {}
@@ -47,7 +48,9 @@ export class EventService {
     const now = new Date();
     const salesStartTime = new Date(createEventDto.salesStartTime);
     if (salesStartTime <= now) {
-      // TODO
+      throw new BadRequestError(
+        "Start time cannot be in the past. Please choose a future time.",
+      );
     }
     const newEvent = await this.eventRepository.createEvent(createEventDto);
 
@@ -64,14 +67,36 @@ export class EventService {
   ): Promise<Event | null> {
     const targetEvent = await this.eventRepository.findById(eventId);
     if (!targetEvent) {
-      throw new NotFoundError("Event with this id not found. ");
+      throw new NotFoundError("Event with this id not found.");
     }
 
+    const now = new Date();
+    const salesStartTime = new Date(updateEventDto.salesStartTime!);
+
+    if (salesStartTime <= now) {
+      throw new BadRequestError(
+        "Start time cannot be in the past. Please choose a future time.",
+      );
+    }
     const updateEvent = await this.eventRepository.updateEvent(
       eventId,
       updateEventDto,
     );
 
     return updateEvent;
+  }
+
+  /*******************************************************
+   ************* @description DELETE HANDLERS *************
+   *******************************************************/
+
+  async deleteEvent(eventId: string): Promise<void> {
+    const targetEvent = await this.eventRepository.findById(eventId);
+
+    if (!targetEvent) {
+      throw new NotFoundError("Event with this id does not exist");
+    }
+
+    await this.eventRepository.deleteEvent(eventId);
   }
 }

@@ -179,10 +179,7 @@ export class UserService {
     const targetUser = await this.findUserById(userId);
 
     // if the user is admin, only main admin can delete the user
-    if (
-      targetUser!.role === "admin" &&
-      currentUser.email !== "admin@gmail.com"
-    ) {
+    if (targetUser!.role === "admin" || currentUser.role === "admin") {
       throw new NotAuthorizedError(
         "You cannot delete the admin account. Only the system administrator can do this.",
       );
