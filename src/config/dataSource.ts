@@ -1,8 +1,8 @@
 import { DataSource } from "typeorm";
 import * as dotenv from "dotenv";
 import { User } from "../core/users/user.entity";
-import { Reservation } from "../entities/reservation.entity";
 import { Event } from "../core/events/event.entity";
+import { Reservation } from "../core/reservations/reservation.entity";
 
 dotenv.config();
 
