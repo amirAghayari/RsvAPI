@@ -8,6 +8,7 @@ import rateLimit from "express-rate-limit";
 import { NotFoundError } from "../errors/not-found-error";
 import { errorHandler } from "../middlewares/error-handler";
 import { userRouter } from "../core/users/user.routes";
+import { eventRouter } from "../core/events/event.routes";
 
 const routes = (app: Express) => {
   const loginLimiter = rateLimit({
@@ -29,6 +30,7 @@ const routes = (app: Express) => {
   app.use("/api/V1/users/login", loginLimiter);
 
   app.use("/api/V1/users", userRouter);
+  app.use("/api/V1/events", eventRouter);
   // app.use("/api/V1/reservations", ReservationRouter);
   // app.use("/api/V1/events", EventRouter);
   // app.use("/api/V1/logs", LogRouter);
