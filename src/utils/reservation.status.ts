@@ -2,6 +2,7 @@ export enum ReservationStatus {
   PENDING = "pending",
   PAID = "paid",
   CANCELED = "canceled",
+  EXPIRED = " expired",
 }
 
 export enum LogAction {
