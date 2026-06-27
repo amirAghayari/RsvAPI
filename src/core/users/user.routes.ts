@@ -16,10 +16,10 @@ const router = express.Router();
  * @swagger
  * /users/signup:
  *   post:
- *     summary: New user registration
- *     description: This endpoint is used to create a new user account. It receives the user information and after validation, returns an authentication token.
  *     tags:
  *       - Authentication
+ *     summary: Register a new user
+ *     description: Creates a new user account and returns the authenticated user with an access token.
  *     requestBody:
  *       required: true
  *       content:
@@ -36,28 +36,27 @@ const router = express.Router();
  *                 type: string
  *                 minLength: 3
  *                 maxLength: 30
- *                 example: "john doe"
  *                 description: User's full name
+ *                 example: John Doe
  *               email:
  *                 type: string
  *                 format: email
- *                 example: "john@example.com"
- *                 description: Valid email address
+ *                 description: User email address
+ *                 example: john@example.com
  *               password:
  *                 type: string
  *                 format: password
  *                 minLength: 8
- *                 example: "StrongP@ssw0rd"
- *                 description: Password (minimum 8 characters)
+ *                 description: User password
+ *                 example: StrongP@ssw0rd
  *               passwordConfirmation:
  *                 type: string
  *                 format: password
- *                 minLength: 8
- *                 example: "StrongP@ssw0rd"
- *                 description: Must match the password field
+ *                 description: Must match the password
+ *                 example: StrongP@ssw0rd
  *     responses:
  *       201:
- *         description: کاربر با موفقیت ایجاد شد
+ *         description: User registered successfully.
  *         content:
  *           application/json:
  *             schema:
@@ -65,10 +64,10 @@ const router = express.Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "User created successfully"
+ *                   example: User created successfully.
  *                 token:
  *                   type: string
- *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+ *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *                 user:
  *                   type: object
  *                   properties:
@@ -77,12 +76,12 @@ const router = express.Router();
  *                       example: 1
  *                     fullName:
  *                       type: string
- *                       example: "john doe"
+ *                       example: John Doe
  *                     email:
  *                       type: string
- *                       example: "john@example.com"
+ *                       example: john@example.com
  *       400:
- *         description: داده‌های ورودی نامعتبر (خطای اعتبارسنجی)
+ *         description: Validation error.
  *         content:
  *           application/json:
  *             schema:
@@ -90,9 +89,9 @@ const router = express.Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Validation failed: email must be a valid email"
+ *                   example: Validation failed.
  *       409:
- *         description: کاربر قبلاً با این ایمیل یا نام کاربری ثبت شده است
+ *         description: User already exists.
  *         content:
  *           application/json:
  *             schema:
@@ -100,14 +99,13 @@ const router = express.Router();
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "User with this email already exists"
- *       500:
- *         description: خطای داخلی سرور
+ *                   example: User with this email already exists.
  */
-router.post("/signup", [
+router.post(
+  "/signup",
   validate(signupSchema),
   authController.signup.bind(authController),
-]);
+);
 
 router.post("/login", [
   validate(loginSchema),
