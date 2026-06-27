@@ -6,7 +6,6 @@ import {
   JoinColumn,
 } from "typeorm";
 import { ReservationStatus } from "../../utils/reservation.status";
-import { TicketOwner } from "../../utils/ticketOwner.interface";
 import { User } from "../users/user.entity";
 import { Event } from "../events/event.entity";
 
@@ -16,18 +15,12 @@ export class Reservation {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: "integer" })
-  ticketCount: number;
-
   @Column({
     type: "enum",
     enum: ReservationStatus,
     default: ReservationStatus.PENDING,
   })
   status: ReservationStatus;
-
-  @Column({ type: "jsonb" }) // for array of {name, family, mobile, picture}
-  ticketOwner: TicketOwner[];
 
   @ManyToOne(() => User, (user) => user.reservations)
   @JoinColumn({ name: "userId" })
@@ -42,6 +35,12 @@ export class Reservation {
 
   @Column("uuid")
   eventId: string;
+
+  @Column({ nullable: true })
+  expiresAt: Date;
+
+  @Column({ nullable: true })
+  paidAt: Date;
 
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   createdAt: Date;

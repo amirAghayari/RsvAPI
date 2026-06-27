@@ -72,12 +72,12 @@ export class EventRepository extends Repository<Event> {
     if (result.affected === 0) {
       throw new NotFoundError(`Event with id ${id} not found`);
     }
-    const updatedUser = await this.findById(id);
-    if (!updatedUser) {
+    const updatedEvent = await this.findById(id);
+    if (!updatedEvent) {
       throw new NotFoundError(`Event with id ${id} not found after update`);
     }
 
-    return updatedUser;
+    return updatedEvent;
   }
 
   /************************************************************

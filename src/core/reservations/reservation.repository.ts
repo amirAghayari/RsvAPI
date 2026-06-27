@@ -1,6 +1,9 @@
 import { DataSource, Repository } from "typeorm";
 import { Reservation } from "./reservation.entity";
 import APIFeatures from "../../utils/apiFeatures";
+import { ICreateReservationDto } from "./dtos/create-reservation.dto";
+import { IUpdateReservationDto } from "./dtos/update-reservation.dto";
+import { NotFoundError } from "../../errors/not-found-error";
 import { ReservationStatus } from "../../utils/reservation.status";
 
 export class ReservationRepository extends Repository<Reservation> {
@@ -131,16 +134,81 @@ export class ReservationRepository extends Repository<Reservation> {
     });
   }
 
-  async createReservation() {}
+  async findExpiredReservations(): Promise<Reservation[]> {
+    return await this.find({
+      where: {
+        status: ReservationStatus.EXPIRED,
+      },
+    });
+  }
+  async findPendingReservations(): Promise<Reservation[]> {
+    return await this.find({
+      where: {
+        status: ReservationStatus.PENDING,
+      },
+    });
+  }
+  async findConfirmedReservations(): Promise<Reservation[]> {
+    return await this.find({
+      where: {
+        status: ReservationStatus.CONFIRMED,
+      },
+    });
+  }
+  /*************************************************************
+   ************* @description CREATE OPERATIONS ****************
+   *************************************************************/
+
+  async createReservation(
+    createReservationDto: ICreateReservationDto,
+  ): Promise<Reservation> {
+    return this.create(createReservationDto);
+  }
+
+  /************************************************************
+   ************* @description UPDATE OPERATIONS ***************
+   ************************************************************/
+  async updateReservation(
+    id: string,
+    updateReservationDto: IUpdateReservationDto,
+  ): Promise<Reservation | null> {
+    const result = await this.update(id, updateReservationDto);
+    if (result.affected === 0) {
+      throw new NotFoundError(`Event with id ${id} not found`);
+    }
+    const updatedReservation = await this.findById(id);
+    if (!updatedReservation) {
+      throw new NotFoundError(
+        `Reservation with id ${id} not found after update`,
+      );
+    }
+
+    return updatedReservation;
+  }
 
   async updateReservationStatus(
     id: string,
     status: ReservationStatus,
   ): Promise<void> {
-    await this.update(id, {
-      status,
-    });
+    await this.update(id, { status });
   }
+  /************************************************************
+   ************* @description DELETE OPERATIONS ***************
+   ************************************************************/
+  async deleteReservation(
+    id: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const reservation = await this.findOne({ where: { id } });
 
-  // TODO : update , create , delete
+    if (!reservation) {
+      throw new NotFoundError(`Reservation with id ${id} not found`);
+    }
+
+    await this.remove(reservation);
+
+    return {
+      success: true,
+      message: `Reservation with id ${id} deleted successfully`,
+    };
+  }
 }
