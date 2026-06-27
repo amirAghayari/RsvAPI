@@ -32,7 +32,7 @@ export class AuthService {
 
     return this.userRepository.create({
       email: signupDto.email,
-      name: signupDto.name,
+      fullName: signupDto.fullName,
       password: signupDto.password,
     });
   }
@@ -40,7 +40,15 @@ export class AuthService {
   async login(loginDto: ILoginDto) {
     const { email, password } = loginDto;
     const authenticatedUser = await this.userRepository.findByEmail(email, {
-      select: ["id", "name", "email", "role", "password", "photo", "createdAt"],
+      select: [
+        "id",
+        "fullName",
+        "email",
+        "role",
+        "password",
+        "photo",
+        "createdAt",
+      ],
     });
 
     if (!authenticatedUser)
@@ -74,7 +82,7 @@ export class AuthService {
 
     const userId = decoded.userId;
     const user = await this.userRepository.findById(userId, {
-      select: ["id", "email", "role", "name", "photo", "refreshToken"],
+      select: ["id", "email", "role", "fullName", "photo", "refreshToken"],
     });
 
     if (!user) {

@@ -1,6 +1,6 @@
 export interface ICreateUserDto {
   email: string;
-  name: string;
+  fullName: string;
   photo?: string;
   password: string;
 }

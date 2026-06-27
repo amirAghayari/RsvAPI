@@ -19,8 +19,9 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
-  name: string;
+  // TODO : delete nullable
+  @Column({ nullable: true })
+  fullName: string;
 
   @Column({ nullable: true })
   photo: string;

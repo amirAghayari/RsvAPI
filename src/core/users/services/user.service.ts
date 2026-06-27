@@ -77,7 +77,7 @@ export class UserService {
 
   async createUser(createUserDto: ICreateUserDto): Promise<User> {
     const newUser = await this.userRepository.userCreate({
-      name: createUserDto.name,
+      fullName: createUserDto.fullName,
       email: createUserDto.email,
       photo: createUserDto.photo,
       password: createUserDto.password,
@@ -125,7 +125,7 @@ export class UserService {
     }
 
     const updatedUser = await this.userRepository.userUpdate(currentUser.id, {
-      name: updateUserDto.name ?? currentUser.name,
+      fullName: updateUserDto.fullName ?? currentUser.fullName,
       email: updateUserDto.email ?? currentUser.email,
       photo: updateUserDto.photo ?? currentUser.photo,
     });
