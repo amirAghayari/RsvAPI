@@ -9,6 +9,7 @@ import {
 } from "typeorm";
 import bcrypt, { compare, genSalt } from "bcryptjs";
 import { Reservation } from "../reservations/reservation.entity";
+import { Event } from "../events/event.entity";
 
 @Entity("users")
 export class User {
@@ -46,6 +47,9 @@ export class User {
 
   @OneToMany(() => Reservation, (reservation) => reservation.user)
   reservations: Reservation[];
+
+  @OneToMany(() => Event, (event) => event.user)
+  event: Event[];
 
   @BeforeInsert()
   @BeforeUpdate()
