@@ -1,20 +1,12 @@
 import { DuplicateError } from "../../../errors/duplicate-error";
 import { NotAuthorizedError } from "../../../errors/not-authorized-error";
-import {
-  AuthPayload,
-  getRefreshTokenTTLSeconds,
-  verifyRefreshToken,
-} from "../../../utils/jwt";
+import { verifyRefreshToken } from "../../../utils/jwt";
 import { ILoginDto } from "../dtos/login.dto";
 import { ISignupDto } from "../dtos/signup.dto";
 import { UserRepository } from "../user.repository";
-import { RefreshTokenService } from "./refreshToken.service";
 
 export class AuthService {
-  constructor(
-    private readonly userRepository: UserRepository,
-    private readonly refreshTokenService: RefreshTokenService,
-  ) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   /**************************************************************
    ************* @description POST HANDLERS *************
@@ -73,50 +65,15 @@ export class AuthService {
       throw new NotAuthorizedError("Refresh token not provided");
     }
 
-    let decoded: AuthPayload;
-    try {
-      decoded = verifyRefreshToken(refreshToken);
-    } catch {
-      throw new NotAuthorizedError("Invalid refresh token");
-    }
+    const decoded = await verifyRefreshToken(refreshToken);
 
-    const userId = decoded.userId;
-    const user = await this.userRepository.findById(userId, {
-      select: ["id", "email", "role", "fullName", "photo", "refreshToken"],
-    });
+    const user = await this.userRepository.findById(decoded.userId);
 
-    if (!user) {
-      throw new NotAuthorizedError("User not found");
-    }
-
-    let isValid = await this.refreshTokenService.validateRefreshTokenInRedis(
-      userId,
-      refreshToken,
-    );
-
-    if (!isValid && user.refreshToken) {
-      isValid = await this.refreshTokenService.validateRefreshTokenInDB(
-        user,
-        refreshToken,
-      );
-
-      if (isValid) {
-        const ttl = getRefreshTokenTTLSeconds();
-        await this.refreshTokenService.storeRefreshTokenInRedis(
-          userId,
-          refreshToken,
-          ttl,
-        );
-        console.log(`♻️ Refresh token re-stored in Redis for user ${userId}`);
-      }
-    }
-
-    if (!isValid) {
-      throw new NotAuthorizedError("Refresh token expired or revoked");
+    if (!user || user.refreshToken !== refreshToken) {
+      throw new NotAuthorizedError("Refresh token has expired.");
     }
     return user;
   }
-
   /************************************************************
    ************* @description PATCH HANDLERS ******************
    ************************************************************/

@@ -1,5 +1,4 @@
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
-import ms from "ms";
 
 export interface AuthPayload extends JwtPayload {
   userId: string;
@@ -46,8 +45,3 @@ export function verifyAccessToken(token: string): AuthPayload {
 export function verifyRefreshToken(token: string): AuthPayload {
   return jwt.verify(token, REFRESH_SECRET) as AuthPayload;
 }
-
-export const getRefreshTokenTTLSeconds = (): number => {
-  const expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN || "7d";
-  return Math.floor(ms(expiresIn as ms.StringValue) / 1000);
-};
