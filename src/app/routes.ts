@@ -1,6 +1,5 @@
 import { Express, NextFunction, Request, Response } from "express";
 import swaggerUi from "swagger-ui-express";
-import swaggerSpec from "./../swagger";
 // import ReservationRouter from "./../routes/reservation.routes";
 // import EventRouter from "./../routes/event.routes";
 // import LogRouter from "./../routes/log.routes";
@@ -9,6 +8,7 @@ import { NotFoundError } from "../errors/not-found-error";
 import { errorHandler } from "../middlewares/error-handler";
 import { userRouter } from "../core/users/user.routes";
 import { eventRouter } from "../core/events/event.routes";
+import swaggerSpec from "./../config/swagger";
 
 const routes = (app: Express) => {
   const loginLimiter = rateLimit({

@@ -13,7 +13,7 @@ const passwordConfirmationSchema = z
 export const signupSchema = z.object({
   body: z
     .object({
-      name: z.string().min(1, "Name is required"),
+      fullName: z.string().min(1, "Name is required"),
       email: z.string().email("Invalid email"),
     })
     .merge(passwordConfirmationSchema),
