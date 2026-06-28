@@ -1,24 +1,27 @@
-import { DataSource, Repository } from "typeorm";
+import { DataSource, EntityManager } from "typeorm";
 import APIFeatures from "../../utils/apiFeatures";
 import { Event } from "./event.entity";
 import { ICreateEventDto } from "./dtos/create-event.dto";
 import { NotFoundError } from "../../errors/not-found-error";
 import { IUpdateEventDto } from "./dtos/update-event.dto";
 
-export class EventRepository extends Repository<Event> {
-  constructor(dataSource: DataSource) {
-    super(Event, dataSource.manager);
+export class EventRepository {
+  constructor(private readonly dataSource: DataSource) {}
+
+  private repo(manager?: EntityManager) {
+    return (manager ?? this.dataSource.manager).getRepository(Event);
   }
-  async saveEvent(event: Event) {
-    this.manager.save(event);
+
+  async saveEvent(event: Event, manager?: EntityManager) {
+    this.repo(manager).save(event);
   }
 
   /********************************************************
    ************* @description READ OPERATIONS *************
    ********************************************************/
 
-  async findAll(query: any) {
-    const features = new APIFeatures<Event>(this, query);
+  async findAll(query: any, manager?: EntityManager) {
+    const features = new APIFeatures<Event>(this.repo(manager), query);
 
     features.filter().sort().search().limitFields();
 
@@ -36,6 +39,7 @@ export class EventRepository extends Repository<Event> {
       relations?: string[];
       order?: string[];
     },
+    manager?: EntityManager,
   ): Promise<Event | null> {
     const { select, order, relations } = option || {};
 
@@ -47,7 +51,7 @@ export class EventRepository extends Repository<Event> {
     if (relations && relations.length) queryOptions.relations = relations;
     if (order && order.length) queryOptions.order = order;
 
-    const event = await this.findOne(queryOptions);
+    const event = await this.repo(manager).findOne(queryOptions);
 
     return event;
   }
@@ -56,8 +60,11 @@ export class EventRepository extends Repository<Event> {
    ************* @description CREATE OPERATIONS ****************
    *************************************************************/
 
-  async createEvent(createEventDto: ICreateEventDto): Promise<Event> {
-    return this.create(createEventDto);
+  async createEvent(
+    createEventDto: ICreateEventDto,
+    manager?: EntityManager,
+  ): Promise<Event> {
+    return this.repo(manager).create(createEventDto);
   }
 
   /************************************************************
@@ -66,8 +73,9 @@ export class EventRepository extends Repository<Event> {
   async updateEvent(
     id: string,
     payload: IUpdateEventDto,
+    manager?: EntityManager,
   ): Promise<Event | null> {
-    const result = await this.update(id, payload);
+    const result = await this.repo(manager).update(id, payload);
 
     if (result.affected === 0) {
       throw new NotFoundError(`Event with id ${id} not found`);
@@ -85,14 +93,15 @@ export class EventRepository extends Repository<Event> {
    ************************************************************/
   async deleteEvent(
     id: string,
+    manager?: EntityManager,
   ): Promise<{ success: boolean; message: string }> {
-    const event = await this.findOne({ where: { id } });
+    const event = await this.repo(manager).findOne({ where: { id } });
 
     if (!event) {
       throw new NotFoundError(`Event with id ${id} not found`);
     }
 
-    await this.remove(event);
+    await this.repo(manager).remove(event);
 
     return {
       success: true,

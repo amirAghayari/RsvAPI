@@ -1,6 +1,8 @@
+import { DataSource } from "typeorm";
 import { NotFoundError } from "../../../errors/not-found-error";
 import { EventRepository } from "../../events/event.repository";
 import { UserRepository } from "../../users/user.repository";
+import { ICreateReservationDto } from "../dtos/create-reservation.dto";
 import { Reservation } from "../reservation.entity";
 import { ReservationRepository } from "../reservation.repository";
 
@@ -9,6 +11,7 @@ export class ReservationService {
     private readonly reservationRepository: ReservationRepository,
     private readonly userRepository: UserRepository,
     private readonly eventRepository: EventRepository,
+    private readonly dataSource: DataSource,
   ) {}
 
   /******************************************************
@@ -173,5 +176,15 @@ export class ReservationService {
     }
 
     return exists;
+  }
+
+  /******************************************************
+   ************* @description POST HANDLERS *************
+   ******************************************************/
+
+  async createReservation(
+    createReservationDto: ICreateReservationDto,
+  ): Promise<Reservation> {
+    return this.dataSource.transaction(async (manager) => {});
   }
 }

@@ -76,7 +76,7 @@ export class UserService {
    ******************************************************/
 
   async createUser(createUserDto: ICreateUserDto): Promise<User> {
-    const newUser = await this.userRepository.userCreate({
+    const newUser = await this.userRepository.createUser({
       fullName: createUserDto.fullName,
       email: createUserDto.email,
       photo: createUserDto.photo,
@@ -185,10 +185,10 @@ export class UserService {
       );
     }
 
-    await this.userRepository.delete(userId);
+    await this.userRepository.deleteUser(userId);
   }
 
   async deleteCurrentUser(currentUser: User): Promise<void> {
-    await this.userRepository.delete(currentUser.id);
+    await this.userRepository.deleteUser(currentUser.id);
   }
 }

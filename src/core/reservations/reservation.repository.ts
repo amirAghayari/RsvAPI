@@ -1,4 +1,4 @@
-import { DataSource, Repository } from "typeorm";
+import { DataSource, EntityManager, Repository } from "typeorm";
 import { Reservation } from "./reservation.entity";
 import APIFeatures from "../../utils/apiFeatures";
 import { ICreateReservationDto } from "./dtos/create-reservation.dto";
@@ -6,21 +6,23 @@ import { IUpdateReservationDto } from "./dtos/update-reservation.dto";
 import { NotFoundError } from "../../errors/not-found-error";
 import { ReservationStatus } from "../../utils/reservation.status";
 
-export class ReservationRepository extends Repository<Reservation> {
-  constructor(dataSource: DataSource) {
-    super(Reservation, dataSource.manager);
+export class ReservationRepository {
+  constructor(private readonly dataSource: DataSource) {}
+
+  private repo(manager?: EntityManager): Repository<Reservation> {
+    return (manager ?? this.dataSource.manager).getRepository(Reservation);
   }
 
-  async saveReservation(reservation: Reservation): Promise<Reservation> {
-    return this.manager.save(reservation);
-  }
+  // async saveReservation(reservation: Reservation): Promise<Reservation> {
+  //   return this.manager.save(reservation);
+  // }
 
   /********************************************************
    ************* @description READ OPERATIONS *************
    ********************************************************/
 
-  async findAll(query: any) {
-    const feature = new APIFeatures<Reservation>(this, query);
+  async findAll(query: any, manager?: EntityManager) {
+    const feature = new APIFeatures<Reservation>(this.repo(manager), query);
 
     feature.filter().sort().search().limitFields();
 
@@ -37,6 +39,7 @@ export class ReservationRepository extends Repository<Reservation> {
       select?: (keyof Reservation)[];
       relations?: string[];
     },
+    manager?: EntityManager,
   ): Promise<Reservation | null> {
     const { select, relations } = option || {};
 
@@ -47,7 +50,7 @@ export class ReservationRepository extends Repository<Reservation> {
     if (select && select.length) queryOption.select = select;
     if (relations && relations.length) queryOption.relations = relations;
 
-    const reservation = await this.findOne(queryOption);
+    const reservation = await this.repo(manager).findOne(queryOption);
 
     return reservation;
   }
@@ -59,6 +62,7 @@ export class ReservationRepository extends Repository<Reservation> {
       relations?: string[];
       order?: Record<string, string>;
     },
+    manager?: EntityManager,
   ): Promise<Reservation | null> {
     const { select, relations, order } = option || {};
 
@@ -70,7 +74,7 @@ export class ReservationRepository extends Repository<Reservation> {
     if (relations && relations.length) queryOption.relations = relations;
     if (order && order.length) queryOption.order = order;
 
-    const reservation = await this.findOne(queryOption);
+    const reservation = await this.repo(manager).findOne(queryOption);
 
     return reservation;
   }
@@ -82,6 +86,7 @@ export class ReservationRepository extends Repository<Reservation> {
       relations?: string[];
       order?: Record<string, string>;
     },
+    manager?: EntityManager,
   ): Promise<Reservation | null> {
     const { select, relations, order } = option || {};
 
@@ -93,7 +98,7 @@ export class ReservationRepository extends Repository<Reservation> {
     if (relations && relations.length) queryOption.relations = relations;
     if (order && order.length) queryOption.order = order;
 
-    const reservation = await this.findOne(queryOption);
+    const reservation = await this.repo(manager).findOne(queryOption);
 
     return reservation;
   }
@@ -106,6 +111,7 @@ export class ReservationRepository extends Repository<Reservation> {
       relations?: string[];
       order?: Record<string, string>;
     },
+    manager?: EntityManager,
   ): Promise<Reservation | null> {
     const { select, relations, order } = option || {};
 
@@ -117,39 +123,52 @@ export class ReservationRepository extends Repository<Reservation> {
     if (relations && relations.length) queryOption.relations = relations;
     if (order && order.length) queryOption.order = order;
 
-    const reservation = await this.findOne(queryOption);
+    const reservation = await this.repo(manager).findOne(queryOption);
 
     return reservation;
   }
 
-  async countByEvent(eventId: string): Promise<number> {
-    return await this.count({
+  async countByEvent(
+    eventId: string,
+    manager?: EntityManager,
+  ): Promise<number> {
+    return await this.repo(manager).count({
       where: { eventId },
     });
   }
 
-  async existsReservation(userId: string, eventId: string): Promise<boolean> {
-    return await this.exists({
+  async existsReservation(
+    userId: string,
+    eventId: string,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    return await this.repo(manager).exists({
       where: { userId, eventId },
     });
   }
 
-  async findExpiredReservations(): Promise<Reservation[]> {
-    return await this.find({
+  async findExpiredReservations(
+    manager?: EntityManager,
+  ): Promise<Reservation[]> {
+    return await this.repo(manager).find({
       where: {
         status: ReservationStatus.EXPIRED,
       },
     });
   }
-  async findPendingReservations(): Promise<Reservation[]> {
-    return await this.find({
+  async findPendingReservations(
+    manager?: EntityManager,
+  ): Promise<Reservation[]> {
+    return await this.repo(manager).find({
       where: {
         status: ReservationStatus.PENDING,
       },
     });
   }
-  async findConfirmedReservations(): Promise<Reservation[]> {
-    return await this.find({
+  async findConfirmedReservations(
+    manager?: EntityManager,
+  ): Promise<Reservation[]> {
+    return await this.repo(manager).find({
       where: {
         status: ReservationStatus.CONFIRMED,
       },
@@ -161,8 +180,9 @@ export class ReservationRepository extends Repository<Reservation> {
 
   async createReservation(
     createReservationDto: ICreateReservationDto,
+    manager?: EntityManager,
   ): Promise<Reservation> {
-    return this.create(createReservationDto);
+    return this.repo(manager).create(createReservationDto);
   }
 
   /************************************************************
@@ -171,8 +191,9 @@ export class ReservationRepository extends Repository<Reservation> {
   async updateReservation(
     id: string,
     updateReservationDto: IUpdateReservationDto,
+    manager?: EntityManager,
   ): Promise<Reservation | null> {
-    const result = await this.update(id, updateReservationDto);
+    const result = await this.repo(manager).update(id, updateReservationDto);
     if (result.affected === 0) {
       throw new NotFoundError(`Event with id ${id} not found`);
     }
@@ -189,22 +210,24 @@ export class ReservationRepository extends Repository<Reservation> {
   async updateReservationStatus(
     id: string,
     status: ReservationStatus,
+    manager?: EntityManager,
   ): Promise<void> {
-    await this.update(id, { status });
+    await this.repo(manager).update(id, { status });
   }
   /************************************************************
    ************* @description DELETE OPERATIONS ***************
    ************************************************************/
   async deleteReservation(
     id: string,
+    manager?: EntityManager,
   ): Promise<{ success: boolean; message: string }> {
-    const reservation = await this.findOne({ where: { id } });
+    const reservation = await this.repo(manager).findOne({ where: { id } });
 
     if (!reservation) {
       throw new NotFoundError(`Reservation with id ${id} not found`);
     }
 
-    await this.remove(reservation);
+    await this.repo(manager).remove(reservation);
 
     return {
       success: true,

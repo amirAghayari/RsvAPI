@@ -1,4 +1,4 @@
-import { DataSource, Repository, UpdateResult } from "typeorm";
+import { DataSource, EntityManager, UpdateResult } from "typeorm";
 import APIFeatures from "../../utils/apiFeatures";
 import { User } from "./user.entity";
 import { ICreateUserDto } from "./dtos/create-user.dto";
@@ -7,21 +7,22 @@ import { NotFoundError } from "../../errors/not-found-error";
 import { IUpdateCurrentUserInfoDto } from "./dtos/update-currentuser.dto";
 import { IUpdateCurrentUserPasswordDto } from "./dtos/update-currentuser-password.dto";
 
-export class UserRepository extends Repository<User> {
-  constructor(dataSource: DataSource) {
-    super(User, dataSource.manager);
-  }
+export class UserRepository {
+  constructor(private readonly dataSource: DataSource) {}
 
-  async saveUser(user: User): Promise<User> {
-    return this.manager.save(user);
+  private repo(manager?: EntityManager) {
+    return (manager ?? this.dataSource.manager).getRepository(User);
+  }
+  async saveUser(user: User, manager?: EntityManager): Promise<User> {
+    return this.repo(manager).save(user);
   }
 
   /********************************************************
    ************* @description READ OPERATIONS *************
    ********************************************************/
 
-  async findAll(query: any) {
-    const features = new APIFeatures<User>(this, query);
+  async findAll(query: any, manager?: EntityManager) {
+    const features = new APIFeatures<User>(this.repo(manager), query);
 
     features.filter().search().sort().limitFields();
 
@@ -38,6 +39,7 @@ export class UserRepository extends Repository<User> {
       select?: (keyof User)[];
       relations?: string[];
     },
+    manager?: EntityManager,
   ): Promise<User | null> {
     const { select, relations } = options || {};
 
@@ -48,7 +50,7 @@ export class UserRepository extends Repository<User> {
     if (select && select.length) queryOptions.select = select;
     if (relations && relations.length) queryOptions.relations = relations;
 
-    const user = await this.findOne(queryOptions);
+    const user = await this.repo(manager).findOne(queryOptions);
 
     return user;
   }
@@ -59,6 +61,7 @@ export class UserRepository extends Repository<User> {
       select?: (keyof User)[];
       relations?: string[];
     },
+    manager?: EntityManager,
   ): Promise<User | null> {
     const { select, relations } = options || {};
 
@@ -69,7 +72,7 @@ export class UserRepository extends Repository<User> {
     if (select && select.length) queryOptions.select = select;
     if (relations && relations.length) queryOptions.relations = relations;
 
-    const user = await this.findOne(queryOptions);
+    const user = await this.repo(manager).findOne(queryOptions);
 
     return user;
   }
@@ -83,8 +86,10 @@ export class UserRepository extends Repository<User> {
   async findCountByDay(
     endDate: Date,
     startDate?: Date,
+    manager?: EntityManager,
   ): Promise<{ count: number; date: Date }[]> {
-    const query = this.createQueryBuilder("users")
+    const query = this.repo(manager)
+      .createQueryBuilder("users")
       .select("DATE(user.createdAt) as date")
       .addSelect("COUNT(user.ic)", "count")
       .where("user.createdAt BETWEEN :start AND :end", {
@@ -106,8 +111,11 @@ export class UserRepository extends Repository<User> {
    ************* @description CREATE OPERATIONS ****************
    *************************************************************/
 
-  async userCreate(createUserDto: ICreateUserDto): Promise<User> {
-    return this.create(createUserDto);
+  async createUser(
+    createUserDto: ICreateUserDto,
+    manager?: EntityManager,
+  ): Promise<User> {
+    return this.repo(manager).create(createUserDto);
   }
 
   /************************************************************
@@ -120,8 +128,12 @@ export class UserRepository extends Repository<User> {
       | IUpdateUserDto
       | IUpdateCurrentUserInfoDto
       | IUpdateCurrentUserPasswordDto,
+    manager?: EntityManager,
   ): Promise<User | null> {
-    const result: UpdateResult = await this.update(userId, payload);
+    const result: UpdateResult = await this.repo(manager).update(
+      userId,
+      payload,
+    );
 
     if (result.affected === 0) {
       throw new NotFoundError(`User with id ${userId} not found`);
@@ -140,14 +152,15 @@ export class UserRepository extends Repository<User> {
 
   async deleteUser(
     userId: string,
+    manager?: EntityManager,
   ): Promise<{ success: boolean; message: string }> {
-    const user = await this.findOne({ where: { id: userId } });
+    const user = await this.repo(manager).findOne({ where: { id: userId } });
 
     if (!user) {
       throw new NotFoundError(`User with id ${userId} not found`);
     }
 
-    await this.remove(user);
+    await this.repo(manager).remove(user);
 
     return {
       success: true,

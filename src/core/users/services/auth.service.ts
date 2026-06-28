@@ -22,7 +22,7 @@ export class AuthService {
 
     // return this.userService.createUser(signupDto);
 
-    return this.userRepository.create({
+    return this.userRepository.createUser({
       email: signupDto.email,
       fullName: signupDto.fullName,
       password: signupDto.password,
