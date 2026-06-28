@@ -26,7 +26,7 @@ export class EventService {
     return { pagination, events };
   }
 
-  async findEventById(
+  async getEventById(
     eventId: string,
     options?: {
       select?: (keyof Event)[];
@@ -44,7 +44,6 @@ export class EventService {
   /******************************************************
    ************* @description POST HANDLERS *************
    ******************************************************/
-  // TODO : change event status
   async createEvent(createEventDto: ICreateEventDto): Promise<Event> {
     const now = new Date();
     const salesStartTime = new Date(createEventDto.salesStartTime);
@@ -67,7 +66,7 @@ export class EventService {
     }
     const newEvent = await this.eventRepository.createEvent(createEventDto);
 
-    return await this.eventRepository.saveEvent(newEvent);
+    return newEvent;
   }
 
   /*******************************************************
@@ -166,7 +165,8 @@ export class EventService {
     }
     if (
       targetEvent.status === EventStatus.PUBLISHED ||
-      targetEvent.status === EventStatus.FINISHED
+      targetEvent.status === EventStatus.FINISHED ||
+      targetEvent.status === EventStatus.SOLD_OUT
     ) {
       throw new BadRequestError("Cannot delete a published or finished event.");
     }

@@ -24,7 +24,7 @@ export class EventController {
   }
 
   async findEventById(req: Request, res: Response) {
-    const event = await this.eventService.findEventById(req.params.id);
+    const event = await this.eventService.getEventById(req.params.id);
     res.status(200).json({
       status: "success",
       data: event,
