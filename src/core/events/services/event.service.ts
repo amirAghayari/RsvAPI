@@ -35,7 +35,7 @@ export class EventService {
   ): Promise<Event | null> {
     const targetEvent = await this.eventRepository.findById(eventId, options);
     if (!targetEvent) {
-      throw new NotFoundError(`event with this id : ${eventId} not found.`);
+      throw new NotFoundError(`Event with this id : ${eventId} not found.`);
     }
 
     return targetEvent;

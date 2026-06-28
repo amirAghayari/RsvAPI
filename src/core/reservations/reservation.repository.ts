@@ -26,9 +26,9 @@ export class ReservationRepository extends Repository<Reservation> {
 
     const { pagination, total, skip } = await feature.pagination();
 
-    const reservation = await feature.execute();
+    const reservations = await feature.execute();
 
-    return { pagination, skip, total, reservation };
+    return { pagination, skip, total, reservations };
   }
 
   async findById(
