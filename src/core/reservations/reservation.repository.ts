@@ -13,9 +13,12 @@ export class ReservationRepository {
     return (manager ?? this.dataSource.manager).getRepository(Reservation);
   }
 
-  // async saveReservation(reservation: Reservation): Promise<Reservation> {
-  //   return this.manager.save(reservation);
-  // }
+  async saveReservation(
+    reservation: Reservation,
+    manager?: EntityManager,
+  ): Promise<Reservation> {
+    return await this.repo(manager).save(reservation);
+  }
 
   /********************************************************
    ************* @description READ OPERATIONS *************
@@ -182,7 +185,8 @@ export class ReservationRepository {
     createReservationDto: ICreateReservationDto,
     manager?: EntityManager,
   ): Promise<Reservation> {
-    return this.repo(manager).create(createReservationDto);
+    const newReservation = this.repo(manager).create(createReservationDto);
+    return await this.saveReservation(newReservation, manager);
   }
 
   /************************************************************
@@ -197,7 +201,7 @@ export class ReservationRepository {
     if (result.affected === 0) {
       throw new NotFoundError(`Event with id ${id} not found`);
     }
-    const updatedReservation = await this.findById(id);
+    const updatedReservation = await this.findById(id, undefined, manager);
     if (!updatedReservation) {
       throw new NotFoundError(
         `Reservation with id ${id} not found after update`,

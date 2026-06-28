@@ -13,7 +13,7 @@ export class EventRepository {
   }
 
   async saveEvent(event: Event, manager?: EntityManager) {
-    this.repo(manager).save(event);
+    return await this.repo(manager).save(event);
   }
 
   /********************************************************
@@ -64,7 +64,9 @@ export class EventRepository {
     createEventDto: ICreateEventDto,
     manager?: EntityManager,
   ): Promise<Event> {
-    return this.repo(manager).create(createEventDto);
+    const newEvent = await this.repo(manager).create(createEventDto);
+
+    return await this.saveEvent(newEvent, manager);
   }
 
   /************************************************************
@@ -80,7 +82,7 @@ export class EventRepository {
     if (result.affected === 0) {
       throw new NotFoundError(`Event with id ${id} not found`);
     }
-    const updatedEvent = await this.findById(id);
+    const updatedEvent = await this.findById(id, undefined, manager);
     if (!updatedEvent) {
       throw new NotFoundError(`Event with id ${id} not found after update`);
     }

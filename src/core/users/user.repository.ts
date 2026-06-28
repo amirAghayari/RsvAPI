@@ -14,7 +14,7 @@ export class UserRepository {
     return (manager ?? this.dataSource.manager).getRepository(User);
   }
   async saveUser(user: User, manager?: EntityManager): Promise<User> {
-    return this.repo(manager).save(user);
+    return await this.repo(manager).save(user);
   }
 
   /********************************************************
@@ -115,7 +115,9 @@ export class UserRepository {
     createUserDto: ICreateUserDto,
     manager?: EntityManager,
   ): Promise<User> {
-    return this.repo(manager).create(createUserDto);
+    const newUser = this.repo(manager).create(createUserDto);
+
+    return await this.saveUser(newUser, manager);
   }
 
   /************************************************************
@@ -138,7 +140,7 @@ export class UserRepository {
     if (result.affected === 0) {
       throw new NotFoundError(`User with id ${userId} not found`);
     }
-    const updatedUser = await this.findById(userId);
+    const updatedUser = await this.findById(userId, undefined, manager);
     if (!updatedUser) {
       throw new NotFoundError(`User with id ${userId} not found after update`);
     }
