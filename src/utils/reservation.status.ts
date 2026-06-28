@@ -3,7 +3,7 @@ export enum ReservationStatus {
   PAID = "paid",
   CONFIRMED = "confirmed",
   CANCELED = "canceled",
-  EXPIRED = " expired",
+  EXPIRED = "expired",
 }
 
 export enum LogAction {

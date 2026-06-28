@@ -5,6 +5,9 @@ import { UserRepository } from "../../users/user.repository";
 import { ICreateReservationDto } from "../dtos/create-reservation.dto";
 import { Reservation } from "../reservation.entity";
 import { ReservationRepository } from "../reservation.repository";
+import { DuplicateError } from "../../../errors/duplicate-error";
+import { BadRequestError } from "../../../errors/bad-request-error";
+import { EventStatus } from "../../../utils/event.status";
 
 export class ReservationService {
   constructor(
@@ -185,6 +188,72 @@ export class ReservationService {
   async createReservation(
     createReservationDto: ICreateReservationDto,
   ): Promise<Reservation> {
-    return this.dataSource.transaction(async (manager) => {});
+    return this.dataSource.transaction(async (manager) => {
+      const user = await this.userRepository.findById(
+        createReservationDto.userId,
+        undefined,
+        manager,
+      );
+
+      if (!user) {
+        throw new NotFoundError(
+          `User with id ${createReservationDto.userId} not found.`,
+        );
+      }
+
+      const event = await this.eventRepository.findById(
+        createReservationDto.eventId,
+        undefined,
+        manager,
+      );
+
+      if (!event) {
+        throw new NotFoundError(
+          `Event with id ${createReservationDto.eventId} not found.`,
+        );
+      }
+
+      const exists = await this.reservationRepository.existsReservation(
+        createReservationDto.userId,
+        createReservationDto.eventId,
+        manager,
+      );
+
+      if (exists) {
+        throw new DuplicateError("You have already reserved this event.");
+      }
+
+      if (event.remainingCapacity <= 0) {
+        throw new BadRequestError("Event capacity is full.");
+      }
+
+      if (event.remainingCapacity === 0) {
+        event.status = EventStatus.SOLD_OUT;
+      }
+
+      if ((event.status = EventStatus.CANCELED)) {
+        throw new BadRequestError("Event canceled.");
+      }
+
+      if ((event.status = EventStatus.FINISHED)) {
+        throw new BadRequestError("Event finished.");
+      }
+      if ((event.status = EventStatus.DRAFT)) {
+        throw new BadRequestError("Event not published yet.");
+      }
+
+      event.remainingCapacity--;
+      await this.eventRepository.saveEvent(event, manager);
+
+      const newReservation = await this.reservationRepository.createReservation(
+        createReservationDto,
+        manager,
+      );
+
+      event.reservations.push(newReservation);
+      user.reservations.push(newReservation);
+
+      return await this.reservationRepository.saveReservation(newReservation);
+    });
   }
 }

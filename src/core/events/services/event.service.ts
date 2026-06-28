@@ -44,7 +44,7 @@ export class EventService {
   /******************************************************
    ************* @description POST HANDLERS *************
    ******************************************************/
-
+  // TODO : change event status
   async createEvent(createEventDto: ICreateEventDto): Promise<Event> {
     const now = new Date();
     const salesStartTime = new Date(createEventDto.salesStartTime);
@@ -67,7 +67,7 @@ export class EventService {
     }
     const newEvent = await this.eventRepository.createEvent(createEventDto);
 
-    return newEvent;
+    return await this.eventRepository.saveEvent(newEvent);
   }
 
   /*******************************************************
@@ -104,6 +104,7 @@ export class EventService {
           `From PUBLISHED you can only go to CANCELED or FINISHED.`,
         );
       }
+
       // if (newStatus === EventStatus.FINISHED) {
       //   const endTime = new Date(targetEvent.salesEndTime);
       //   if (endTime > now) {

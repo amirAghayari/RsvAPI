@@ -4,6 +4,8 @@ import {
   Column,
   OneToMany,
   ManyToOne,
+  Index,
+  JoinColumn,
 } from "typeorm";
 import { Reservation } from "../reservations/reservation.entity";
 import { EventStatus } from "../../utils/event.status";
@@ -15,7 +17,7 @@ export class Event {
   id: string;
 
   // TODO : del nullable
-  @Column({ nullable: true })
+  @Column({ nullable: true, length: 255 })
   title: string;
 
   @Column({ type: "integer", nullable: true })
@@ -23,6 +25,12 @@ export class Event {
 
   @Column({ type: "integer", nullable: true })
   capacity: number;
+
+  @Column({
+    type: "integer",
+    nullable: true,
+  })
+  remainingCapacity: number;
 
   @Column({ type: "timestamp" })
   executionDate: Date;
@@ -36,6 +44,7 @@ export class Event {
   @Column({ nullable: true })
   location: string;
 
+  @Index()
   @Column({
     type: "enum",
     enum: EventStatus,
@@ -43,7 +52,15 @@ export class Event {
   })
   status: EventStatus;
 
-  @ManyToOne(() => User, (user) => user.event)
+  @Column({ nullable: true })
+  userId: string;
+
+  @ManyToOne(() => User, (user) => user.event, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({
+    name: "userId",
+  })
   user: User;
 
   @OneToMany(() => Reservation, (reservation) => reservation.event)

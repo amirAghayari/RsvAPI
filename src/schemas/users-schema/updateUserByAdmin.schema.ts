@@ -1,8 +1,9 @@
 import { z } from "zod";
 
+// TODO
 export const updateUserByAdminSchema = z.object({
   body: z.object({
-    name: z.string().optional(),
+    fullName: z.string().optional(),
     email: z.string().email("Invalid email address").optional(),
     photo: z.string().optional(),
     active: z.boolean().optional(),

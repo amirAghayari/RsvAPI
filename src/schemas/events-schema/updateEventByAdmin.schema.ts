@@ -1,5 +1,7 @@
 import z from "zod";
 
+// TODO
+
 export const updateEventByAdminSchema = z.object({
   body: z.object({
     name: z
