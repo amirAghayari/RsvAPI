@@ -4,7 +4,7 @@ export interface ICreateEventDto {
   price: number;
   location: string;
   capacity: number;
-  remainingCapacity: number;
+  remainingCapacity?: number;
   executionDate: Date;
   salesStartTime: Date;
   salesEndTime: Date;

@@ -64,7 +64,11 @@ export class EventService {
     if (salesEndTime <= salesStartTime) {
       throw new BadRequestError("End time must be after start time.");
     }
-    const newEvent = await this.eventRepository.createEvent(createEventDto);
+
+    const remainingCapacity = createEventDto.capacity;
+    const newEventInput = { remainingCapacity, ...createEventDto };
+
+    const newEvent = await this.eventRepository.createEvent(newEventInput);
 
     return newEvent;
   }

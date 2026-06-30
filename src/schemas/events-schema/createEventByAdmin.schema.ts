@@ -12,7 +12,6 @@ export const createEventByAdminSchema = z.object({
     .min(1, "The price is required"),
   location: z.string().min(4, "Event location required "),
   capacity: z.number("The capacity of a numeric field is").min(5),
-  remainingCapacity: z.number("The capacity of a numeric field is").max(30),
   executionDate: z.date(),
   salesStartTime: z.date(),
   salesEndTime: z.date(),

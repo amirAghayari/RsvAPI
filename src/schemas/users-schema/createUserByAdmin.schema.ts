@@ -6,6 +6,7 @@ export const createUserByAdminSchema = z.object({
     .object({
       fullName: z.string().min(1, "Name is required"),
       email: z.string().email("Invalid email address"),
+      photo: z.string().optional(),
     })
     .merge(passwordValidationSchema),
 });
