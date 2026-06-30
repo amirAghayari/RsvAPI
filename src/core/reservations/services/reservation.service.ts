@@ -34,16 +34,10 @@ export class ReservationService {
     return { pagination, reservations };
   }
 
-  async getExpiredReservations(): Promise<Reservation[]> {
-    return await this.reservationRepository.findExpiredReservations();
-  }
-
-  async getConfirmedReservations(): Promise<Reservation[]> {
-    return await this.reservationRepository.findConfirmedReservations();
-  }
-
-  async getPendingReservations(): Promise<Reservation[]> {
-    return await this.reservationRepository.findPendingReservations();
+  async getReservationsByStatus(
+    status: ReservationStatus,
+  ): Promise<Reservation[]> {
+    return await this.reservationRepository.findReservationsByStatus(status);
   }
 
   async getReservationById(

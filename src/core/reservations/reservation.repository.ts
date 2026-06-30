@@ -150,33 +150,17 @@ export class ReservationRepository {
     });
   }
 
-  async findExpiredReservations(
+  async findReservationsByStatus(
+    status: ReservationStatus,
     manager?: EntityManager,
   ): Promise<Reservation[]> {
     return await this.repo(manager).find({
       where: {
-        status: ReservationStatus.EXPIRED,
+        status: status,
       },
     });
   }
-  async findPendingReservations(
-    manager?: EntityManager,
-  ): Promise<Reservation[]> {
-    return await this.repo(manager).find({
-      where: {
-        status: ReservationStatus.PENDING,
-      },
-    });
-  }
-  async findConfirmedReservations(
-    manager?: EntityManager,
-  ): Promise<Reservation[]> {
-    return await this.repo(manager).find({
-      where: {
-        status: ReservationStatus.CONFIRMED,
-      },
-    });
-  }
+
   /*************************************************************
    ************* @description CREATE OPERATIONS ****************
    *************************************************************/

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { ReservationService } from "../services/reservation.service";
+import { ReservationStatus } from "../../../utils/reservation.status";
 
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
@@ -20,33 +21,11 @@ export class ReservationController {
     });
   }
 
-  async getExpiredReservations(_req: Request, res: Response) {
-    const reservations = await this.reservationService.getExpiredReservations();
-
-    res.status(200).json({
-      status: "success",
-      results: reservations.length,
-      data: {
-        reservations,
-      },
-    });
-  }
-
-  async getConfirmedReservations(_req: Request, res: Response) {
-    const reservations =
-      await this.reservationService.getConfirmedReservations();
-
-    res.status(200).json({
-      status: "success",
-      results: reservations.length,
-      data: {
-        reservations,
-      },
-    });
-  }
-
-  async getPendingReservations(_req: Request, res: Response) {
-    const reservations = await this.reservationService.getPendingReservations();
+  async getReservationsByStatus(req: Request, res: Response) {
+    const { status } = req.params;
+    const reservations = await this.reservationService.getReservationsByStatus(
+      status as ReservationStatus,
+    );
 
     res.status(200).json({
       status: "success",
