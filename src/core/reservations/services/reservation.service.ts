@@ -291,4 +291,19 @@ export class ReservationService {
 
     return updatedReservation;
   }
+
+  /******************************************************
+   ************* @description DELETE HANDLERS *************
+   ******************************************************/
+
+  //  This fn only available for admin
+  async deleteReservation(id: string) {
+    const targetReservation = await this.reservationRepository.findById(id);
+
+    if (!targetReservation) {
+      throw new NotFoundError("Reservation with this id does not exist");
+    }
+
+    await this.reservationRepository.deleteReservation(id);
+  }
 }
