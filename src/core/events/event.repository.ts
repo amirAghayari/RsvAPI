@@ -49,7 +49,7 @@ export class EventRepository {
 
     if (select && select.length) queryOptions.select = select;
     if (relations && relations.length) queryOptions.relations = relations;
-    if (order && order.length) queryOptions.order = order;
+    if (order) queryOptions.order = order;
 
     const event = await this.repo(manager).findOne(queryOptions);
 

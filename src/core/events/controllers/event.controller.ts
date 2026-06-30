@@ -19,7 +19,7 @@ export class EventController {
       status: "success",
       results: events.length,
       pagination,
-      data: events,
+      data: { events },
     });
   }
 
@@ -27,7 +27,7 @@ export class EventController {
     const event = await this.eventService.getEventById(req.params.id);
     res.status(200).json({
       status: "success",
-      data: event,
+      data: { event },
     });
   }
 

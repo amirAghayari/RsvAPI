@@ -48,7 +48,7 @@ export class ReservationService {
 
   async getReservationById(
     id: string,
-    option: {
+    option?: {
       select?: (keyof Reservation)[];
       relations?: string[];
     },
@@ -67,7 +67,7 @@ export class ReservationService {
 
   async getReservationByUserId(
     userId: string,
-    option: {
+    option?: {
       select?: (keyof Reservation)[];
       relations?: string[];
     },
@@ -122,7 +122,7 @@ export class ReservationService {
   async getReservationByUserAndEventId(
     userId: string,
     eventId: string,
-    option: {
+    option?: {
       select?: (keyof Reservation)[];
       relations?: string[];
     },

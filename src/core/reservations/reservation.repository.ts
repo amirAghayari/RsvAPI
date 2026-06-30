@@ -75,7 +75,7 @@ export class ReservationRepository {
 
     if (select && select.length) queryOption.select = select;
     if (relations && relations.length) queryOption.relations = relations;
-    if (order && order.length) queryOption.order = order;
+    if (order) queryOption.order = order;
 
     const reservation = await this.repo(manager).findOne(queryOption);
 
@@ -99,7 +99,7 @@ export class ReservationRepository {
 
     if (select && select.length) queryOption.select = select;
     if (relations && relations.length) queryOption.relations = relations;
-    if (order && order.length) queryOption.order = order;
+    if (order) queryOption.order = order;
 
     const reservation = await this.repo(manager).findOne(queryOption);
 
@@ -124,7 +124,7 @@ export class ReservationRepository {
 
     if (select && select.length) queryOption.select = select;
     if (relations && relations.length) queryOption.relations = relations;
-    if (order && order.length) queryOption.order = order;
+    if (order) queryOption.order = order;
 
     const reservation = await this.repo(manager).findOne(queryOption);
 
