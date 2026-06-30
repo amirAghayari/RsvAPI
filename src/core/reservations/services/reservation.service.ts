@@ -8,6 +8,7 @@ import { ReservationRepository } from "../reservation.repository";
 import { DuplicateError } from "../../../errors/duplicate-error";
 import { BadRequestError } from "../../../errors/bad-request-error";
 import { EventStatus } from "../../../utils/event.status";
+import { ReservationStatus } from "../../../utils/reservation.status";
 
 export class ReservationService {
   constructor(
@@ -255,5 +256,39 @@ export class ReservationService {
 
       return await this.reservationRepository.saveReservation(newReservation);
     });
+  }
+
+  /******************************************************
+   ************* @description Patch HANDLERS *************
+   ******************************************************/
+
+  async updateReservationStatus(
+    id: string,
+    status: ReservationStatus,
+  ): Promise<Reservation | null> {
+    const targetReservation = await this.reservationRepository.findById(id);
+
+    if (!targetReservation) {
+      throw new NotFoundError(`Reservation with id : ${id} not found.`);
+    }
+
+    if (
+      targetReservation.status === ReservationStatus.EXPIRED ||
+      targetReservation.status === ReservationStatus.CANCELED
+    ) {
+      throw new BadRequestError(
+        "Cannot update the expired or canceled reservation.",
+      );
+    }
+    if (targetReservation.status === ReservationStatus.PAID) {
+      throw new BadRequestError("Cannot update the paid reservation.");
+    }
+
+    await this.reservationRepository.updateReservationStatus(id, status);
+    const updatedReservation = await this.reservationRepository.findById(id, {
+      select: ["status"],
+    });
+
+    return updatedReservation;
   }
 }

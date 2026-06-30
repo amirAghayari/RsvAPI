@@ -215,7 +215,7 @@ export class ReservationRepository {
     id: string,
     status: ReservationStatus,
     manager?: EntityManager,
-  ): Promise<void> {
+  ) {
     await this.repo(manager).update(id, { status });
   }
   /************************************************************
