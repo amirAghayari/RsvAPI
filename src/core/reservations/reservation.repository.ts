@@ -1,7 +1,7 @@
-import { DataSource, EntityManager, Repository } from "typeorm";
+import { DataSource, DeepPartial, EntityManager, Repository } from "typeorm";
 import { Reservation } from "./reservation.entity";
 import APIFeatures from "../../utils/apiFeatures";
-import { ICreateReservationDto } from "./dtos/create-reservation.dto";
+
 import { IUpdateReservationDto } from "./dtos/update-reservation.dto";
 import { NotFoundError } from "../../errors/not-found-error";
 import { ReservationStatus } from "../../utils/reservation.status";
@@ -182,10 +182,10 @@ export class ReservationRepository {
    *************************************************************/
 
   async createReservation(
-    createReservationDto: ICreateReservationDto,
+    data: DeepPartial<Reservation>,
     manager?: EntityManager,
   ): Promise<Reservation> {
-    const newReservation = this.repo(manager).create(createReservationDto);
+    const newReservation = this.repo(manager).create(data);
     return await this.saveReservation(newReservation, manager);
   }
 

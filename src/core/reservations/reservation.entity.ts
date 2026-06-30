@@ -4,17 +4,21 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
+  Index,
 } from "typeorm";
 import { ReservationStatus } from "../../utils/reservation.status";
 import { User } from "../users/user.entity";
 import { Event } from "../events/event.entity";
 
 // TODO : reservation : update relations , structure
+@Index(["userId", "eventId"], { unique: true })
 @Entity("reservations")
 export class Reservation {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
+  @Index()
   @Column({
     type: "enum",
     enum: ReservationStatus,
@@ -22,7 +26,7 @@ export class Reservation {
   })
   status: ReservationStatus;
 
-  @ManyToOne(() => User, (user) => user.reservations)
+  @ManyToOne(() => User, (user) => user.reservations, { nullable: false })
   @JoinColumn({ name: "userId" })
   user: User;
 
@@ -36,12 +40,13 @@ export class Reservation {
   @Column("uuid")
   eventId: string;
 
-  @Column({ nullable: true })
+  @Index()
+  @Column({ type: "timestamp", nullable: true })
   expiresAt: Date;
 
-  @Column({ nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   paidAt: Date;
 
-  @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
   createdAt: Date;
 }

@@ -2,7 +2,7 @@ import { DataSource } from "typeorm";
 import { NotFoundError } from "../../../errors/not-found-error";
 import { EventRepository } from "../../events/event.repository";
 import { UserRepository } from "../../users/user.repository";
-import { ICreateReservationDto } from "../dtos/create-reservation.dto";
+
 import { Reservation } from "../reservation.entity";
 import { ReservationRepository } from "../reservation.repository";
 import { DuplicateError } from "../../../errors/duplicate-error";
@@ -187,36 +187,32 @@ export class ReservationService {
    ******************************************************/
 
   async createReservation(
-    createReservationDto: ICreateReservationDto,
+    userId: string,
+    eventId: string,
   ): Promise<Reservation> {
     return this.dataSource.transaction(async (manager) => {
       const user = await this.userRepository.findById(
-        createReservationDto.userId,
+        userId,
         undefined,
+        manager,
+      );
+
+      const event = await this.eventRepository.findByIdForUpdate(
+        eventId,
         manager,
       );
 
       if (!user) {
-        throw new NotFoundError(
-          `User with id ${createReservationDto.userId} not found.`,
-        );
+        throw new NotFoundError(`User with id ${userId} not found.`);
       }
 
-      const event = await this.eventRepository.findById(
-        createReservationDto.eventId,
-        undefined,
-        manager,
-      );
-
       if (!event) {
-        throw new NotFoundError(
-          `Event with id ${createReservationDto.eventId} not found.`,
-        );
+        throw new NotFoundError(`Event with id ${eventId} not found.`);
       }
 
       const exists = await this.reservationRepository.existsReservation(
-        createReservationDto.userId,
-        createReservationDto.eventId,
+        userId,
+        eventId,
         manager,
       );
 
@@ -224,35 +220,38 @@ export class ReservationService {
         throw new DuplicateError("You have already reserved this event.");
       }
 
+      if (event.status === EventStatus.DRAFT) {
+        throw new BadRequestError("Event not published yet.");
+      }
+
+      if (event.status === EventStatus.CANCELED) {
+        throw new BadRequestError("Event canceled.");
+      }
+
+      if (event.status === EventStatus.FINISHED) {
+        throw new BadRequestError("Event finished.");
+      }
+
       if (event.remainingCapacity <= 0) {
         throw new BadRequestError("Event capacity is full.");
       }
+
+      event.remainingCapacity--;
 
       if (event.remainingCapacity === 0) {
         event.status = EventStatus.SOLD_OUT;
       }
 
-      if ((event.status = EventStatus.CANCELED)) {
-        throw new BadRequestError("Event canceled.");
-      }
-
-      if ((event.status = EventStatus.FINISHED)) {
-        throw new BadRequestError("Event finished.");
-      }
-      if ((event.status = EventStatus.DRAFT)) {
-        throw new BadRequestError("Event not published yet.");
-      }
-
-      event.remainingCapacity--;
       await this.eventRepository.saveEvent(event, manager);
 
       const newReservation = await this.reservationRepository.createReservation(
-        createReservationDto,
+        {
+          userId,
+          eventId,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
         manager,
       );
-
-      event.reservations.push(newReservation);
-      user.reservations.push(newReservation);
 
       return await this.reservationRepository.saveReservation(newReservation);
     });

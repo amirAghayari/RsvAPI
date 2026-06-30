@@ -56,6 +56,19 @@ export class EventRepository {
     return event;
   }
 
+  //Event locking to manage concurrency
+  async findByIdForUpdate(
+    id: string,
+    manager: EntityManager,
+  ): Promise<Event | null> {
+    return manager
+      .getRepository(Event)
+      .createQueryBuilder("event")
+      .setLock("pessimistic_write")
+      .where("event.id = :id", { id })
+      .getOne();
+  }
+
   /*************************************************************
    ************* @description CREATE OPERATIONS ****************
    *************************************************************/

@@ -1,3 +1,5 @@
-import { ICreateReservationDto } from "./create-reservation.dto";
+import { ReservationStatus } from "../../../utils/reservation.status";
 
-export interface IUpdateReservationDto extends Partial<ICreateReservationDto> {}
+export interface IUpdateReservationDto {
+  status: ReservationStatus;
+}

@@ -129,4 +129,19 @@ export class ReservationController {
       exists: exists,
     });
   }
+
+  /*************************************************************
+   ************* @description CREATE OPERATIONS ****************
+   *************************************************************/
+
+  async createReservation(req: Request, res: Response) {
+    const reservation = await this.reservationService.createReservation(
+      req.user.id,
+      req.params.id,
+    );
+    res.status(201).json({
+      status: "success",
+      data: { reservation },
+    });
+  }
 }
