@@ -1,6 +1,5 @@
 import { DataSource } from "typeorm";
 import { NotFoundError } from "../../../errors/not-found-error";
-import { EventRepository } from "../../events/event.repository";
 import { UserRepository } from "../../users/user.repository";
 
 import { Reservation } from "../reservation.entity";
@@ -9,12 +8,15 @@ import { DuplicateError } from "../../../errors/duplicate-error";
 import { BadRequestError } from "../../../errors/bad-request-error";
 import { EventStatus } from "../../../utils/event.status";
 import { ReservationStatus } from "../../../utils/reservation.status";
+import { TicketRepository } from "../../tickets/ticket.repository";
+import { EventRepository } from "../../events/event.repository";
 
 export class ReservationService {
   constructor(
     private readonly reservationRepository: ReservationRepository,
     private readonly userRepository: UserRepository,
     private readonly eventRepository: EventRepository,
+    private readonly ticketRepository: TicketRepository,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -182,17 +184,17 @@ export class ReservationService {
 
   async createReservation(
     userId: string,
-    eventId: string,
+    ticketId: string,
+    quantity: number,
   ): Promise<Reservation> {
-    return this.dataSource.transaction(async (manager) => {
+    return await this.dataSource.transaction(async (manager) => {
+      /******************************************************
+       ******************** USER *****************************
+       ******************************************************/
+
       const user = await this.userRepository.findById(
         userId,
         undefined,
-        manager,
-      );
-
-      const event = await this.eventRepository.findByIdForUpdate(
-        eventId,
         manager,
       );
 
@@ -200,54 +202,112 @@ export class ReservationService {
         throw new NotFoundError(`User with id ${userId} not found.`);
       }
 
-      if (!event) {
-        throw new NotFoundError(`Event with id ${eventId} not found.`);
-      }
+      /******************************************************
+       ******************* TICKET ****************************
+       ******************************************************/
 
-      const exists = await this.reservationRepository.existsReservation(
-        userId,
-        eventId,
+      const ticket = await this.ticketRepository.findByIdForUpdate(
+        ticketId,
         manager,
       );
 
-      if (exists) {
-        throw new DuplicateError("You have already reserved this event.");
+      if (!ticket) {
+        throw new NotFoundError(`Ticket with id ${ticketId} not found.`);
       }
 
-      if (event.status === EventStatus.DRAFT) {
-        throw new BadRequestError("Event not published yet.");
+      /******************************************************
+       ******************** EVENT ****************************
+       ******************************************************/
+
+      const event = await this.eventRepository.findById(
+        ticket.eventId,
+        undefined,
+        manager,
+      );
+
+      if (!event) {
+        throw new NotFoundError("Event not found.");
       }
 
-      if (event.status === EventStatus.CANCELED) {
-        throw new BadRequestError("Event canceled.");
+      /******************************************************
+       ******************** VALIDATION ***********************
+       ******************************************************/
+
+      if (event.status !== EventStatus.PUBLISHED) {
+        throw new BadRequestError(
+          "This event is not available for reservation.",
+        );
       }
 
-      if (event.status === EventStatus.FINISHED) {
-        throw new BadRequestError("Event finished.");
+      const now = new Date();
+
+      if (ticket.saleStartsAt > now) {
+        throw new BadRequestError("Ticket sale has not started yet.");
       }
 
-      if (event.remainingCapacity <= 0) {
-        throw new BadRequestError("Event capacity is full.");
+      if (ticket.saleEndsAt < now) {
+        throw new BadRequestError("Ticket sale has ended.");
       }
 
-      event.remainingCapacity--;
-
-      if (event.remainingCapacity === 0) {
-        event.status = EventStatus.SOLD_OUT;
+      if (quantity <= 0) {
+        throw new BadRequestError("Quantity must be greater than zero.");
       }
 
-      await this.eventRepository.saveEvent(event, manager);
+      if (quantity > ticket.maxPerUser) {
+        throw new BadRequestError(
+          `Maximum ${ticket.maxPerUser} tickets can be reserved.`,
+        );
+      }
 
-      const newReservation = await this.reservationRepository.createReservation(
+      const available = ticket.capacity - ticket.reservedCount;
+
+      if (available < quantity) {
+        throw new BadRequestError("Not enough ticket capacity available.");
+      }
+
+      /******************************************************
+       ************ DUPLICATE RESERVATION ********************
+       ******************************************************/
+
+      const activeReservation =
+        await this.reservationRepository.findPendingReservation(
+          userId,
+          ticketId,
+          manager,
+        );
+
+      if (activeReservation) {
+        throw new DuplicateError(
+          "You already have a pending reservation for this ticket.",
+        );
+      }
+
+      /******************************************************
+       **************** UPDATE TICKET ************************
+       ******************************************************/
+
+      ticket.reservedCount += quantity;
+
+      await this.ticketRepository.saveTicket(ticket, manager);
+
+      /******************************************************
+       *************** CREATE RESERVATION ********************
+       ******************************************************/
+
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      const reservation = await this.reservationRepository.createReservation(
         {
           userId,
-          eventId,
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          ticketId,
+          quantity,
+          status: ReservationStatus.PENDING,
+          expiresAt,
         },
         manager,
       );
 
-      return await this.reservationRepository.saveReservation(newReservation);
+      return reservation;
     });
   }
 
