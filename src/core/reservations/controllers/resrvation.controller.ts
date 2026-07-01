@@ -59,7 +59,7 @@ export class ReservationController {
     });
   }
 
-  async getReservationByEventId(req: Request, res: Response) {
+  async getReservationByTicketId(req: Request, res: Response) {
     const reservation = await this.reservationService.getReservationByUserId(
       req.params.id,
     );
@@ -70,13 +70,13 @@ export class ReservationController {
     });
   }
 
-  async getReservationByUserAndEventId(req: Request, res: Response) {
-    const { userId, eventId } = req.params;
+  async getReservationByUserAndTicketId(req: Request, res: Response) {
+    const { userId, ticketId } = req.params;
 
     const reservation =
-      await this.reservationService.getReservationByUserAndEventId(
+      await this.reservationService.getReservationByUserAndTicketId(
         userId,
-        eventId,
+        ticketId,
       );
 
     res.status(200).json({
@@ -85,22 +85,11 @@ export class ReservationController {
     });
   }
 
-  async getReservationCountByEvent(req: Request, res: Response) {
-    const count = await this.reservationService.reservationCountByEvent(
-      req.params.id,
-    );
-
-    res.status(200).json({
-      status: "success",
-      count: count,
-    });
-  }
-
   async reservationExists(req: Request, res: Response) {
-    const { userId, eventId } = req.params;
+    const { userId, ticketId } = req.params;
     const exists = await this.reservationService.reservationIsExists(
       userId,
-      eventId,
+      ticketId,
     );
 
     res.status(200).json({
@@ -115,8 +104,9 @@ export class ReservationController {
 
   async createReservation(req: Request, res: Response) {
     const reservation = await this.reservationService.createReservation(
-      req.user.id,
-      req.params.id,
+      req.user.id || req.body.userId,
+      req.body.ticketId,
+      req.body.quantity,
     );
     res.status(201).json({
       status: "success",
@@ -128,14 +118,31 @@ export class ReservationController {
    ************* @description PATCH OPERATIONS ****************
    *************************************************************/
 
-  async updateReservationStatus(req: Request, res: Response) {
-    const reservation = await this.reservationService.updateReservationStatus(
+  //  TODO : fix payment from zarinpal ,..
+  async confirmReservationPayment(req: Request, res: Response) {
+    const reservation = await this.reservationService.confirmReservationPayment(
       req.params.id,
-      req.body.status as ReservationStatus,
     );
-    res.status(201).json({
+
+    res.status(200).json({
       status: "success",
-      data: { reservation },
+      data: {
+        reservation,
+      },
+    });
+  }
+
+  async cancelReservation(req: Request, res: Response) {
+    const reservation = await this.reservationService.cancelReservation(
+      req.params.id,
+      req.body.userId,
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        reservation,
+      },
     });
   }
 
