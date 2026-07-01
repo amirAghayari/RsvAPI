@@ -6,6 +6,7 @@ import { IUpdateUserDto } from "./dtos/update-user.dto";
 import { NotFoundError } from "../../errors/not-found-error";
 import { IUpdateCurrentUserInfoDto } from "./dtos/update-currentuser.dto";
 import { IUpdateCurrentUserPasswordDto } from "./dtos/update-currentuser-password.dto";
+import { IUpdateUserAvatar } from "./dtos/update-user-avatar.dto";
 
 export class UserRepository {
   constructor(private readonly dataSource: DataSource) {}
@@ -129,7 +130,8 @@ export class UserRepository {
     payload:
       | IUpdateUserDto
       | IUpdateCurrentUserInfoDto
-      | IUpdateCurrentUserPasswordDto,
+      | IUpdateCurrentUserPasswordDto
+      | IUpdateUserAvatar,
     manager?: EntityManager,
   ): Promise<User | null> {
     const result: UpdateResult = await this.repo(manager).update(

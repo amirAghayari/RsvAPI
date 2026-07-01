@@ -1,9 +1,11 @@
 import streamifier from "streamifier";
 
 import cloudinary from "../../reservations/controllers/cloudinary";
+import { UploadApiResponse } from "cloudinary";
+import { BadRequestError } from "../../../errors/bad-request-error";
 
 export class CloudinaryService {
-  upload(buffer: Buffer) {
+  async upload(buffer: Buffer): Promise<UploadApiResponse> {
     return new Promise((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
@@ -12,7 +14,11 @@ export class CloudinaryService {
         (error, result) => {
           if (error) return reject(error);
 
-          resolve(result);
+          if (!result) {
+            return reject(new BadRequestError("Upload failed"));
+          }
+
+          return resolve(result);
         },
       );
 

@@ -10,6 +10,7 @@ import { isAdmin } from "../../middlewares/admin.middleware";
 import { createUserByAdminSchema } from "../../schemas/users-schema/createUserByAdmin.schema";
 import { updateUserByAdminSchema } from "../../schemas/users-schema/updateUserByAdmin.schema";
 import { loginSchema } from "../../schemas/users-schema/login.schema";
+import { upload } from "../../middlewares/upload.middleware";
 
 const router = express.Router();
 /**
@@ -134,6 +135,12 @@ router.patch("/me/update-password", [
   validate(updateMePasswordSchema),
   userController.updateCurrentUserPassword.bind(userController),
 ]);
+
+router.patch(
+  "/avatar",
+  upload.single("avatar"),
+  userController.uploadAvatar.bind(userController),
+);
 
 /************************************************************************
  *********  @description Restrict all routes below to admin only *********

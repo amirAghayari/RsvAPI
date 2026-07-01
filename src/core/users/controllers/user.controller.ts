@@ -127,6 +127,19 @@ export class UserController {
     createSendTokenAndResponse(updatedUser!, 200, res);
   }
 
+  async uploadAvatar(req: Request, res: Response) {
+    const user = await this.userService.uploadUserAvatar(
+      req.user.id,
+      req.file!,
+    );
+
+    res.status(200).json({
+      status: "success",
+      data: {
+        user,
+      },
+    });
+  }
   /********************************************************
    ************* @description DELETE HANDLERS *************
    *********************************************************/

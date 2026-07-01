@@ -2,15 +2,20 @@ import { ForbiddenError } from "../../../errors/forbidden-error";
 import { NotAuthorizedError } from "../../../errors/not-authorized-error";
 import { NotFoundError } from "../../../errors/not-found-error";
 import { UnprocessableEntityError } from "../../../errors/unprocessable-entity.error";
+import { CloudinaryService } from "../../cloudinary/services/cloudinary.service";
 import { ICreateUserDto } from "../dtos/create-user.dto";
 import { IUpdateCurrentUserPasswordDto } from "../dtos/update-currentuser-password.dto";
 import { IUpdateCurrentUserInfoDto } from "../dtos/update-currentuser.dto";
 import { IUpdateUserDto } from "../dtos/update-user.dto";
 import { User } from "../user.entity";
 import { UserRepository } from "../user.repository";
+import cloudinary from "../../reservations/controllers/cloudinary";
 
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   private normalizeDateRange(start?: Date, end?: Date) {
     const normalizedEnd = end ? new Date(end) : new Date();
@@ -79,7 +84,6 @@ export class UserService {
     const newUser = await this.userRepository.createUser({
       fullName: createUserDto.fullName,
       email: createUserDto.email,
-      photo: createUserDto.photo,
       password: createUserDto.password,
     });
 
@@ -94,7 +98,7 @@ export class UserService {
     userId: string,
     updateUserDto: IUpdateUserDto,
   ): Promise<User | null> {
-    const targetUser = await this.findUserById(userId);
+    const targetUser = await this.userRepository.findById(userId);
     if (!targetUser) {
       throw new NotFoundError("User with this id not found. ");
     }
@@ -127,7 +131,7 @@ export class UserService {
     const updatedUser = await this.userRepository.userUpdate(currentUser.id, {
       fullName: updateUserDto.fullName ?? currentUser.fullName,
       email: updateUserDto.email ?? currentUser.email,
-      photo: updateUserDto.photo ?? currentUser.photo,
+      avatar: updateUserDto.avatar ?? currentUser.avatar,
     });
 
     return updatedUser;
@@ -138,7 +142,7 @@ export class UserService {
     updateCurrentUserPasswordDto: IUpdateCurrentUserPasswordDto,
   ): Promise<User | null> {
     // find the user, if not found, throw an error
-    const targetUser = await this.findUserById(currentUser.id);
+    const targetUser = await this.userRepository.findById(currentUser.id);
 
     if (!targetUser) {
       throw new NotFoundError(`User with id ${currentUser.id} not found.`);
@@ -168,6 +172,24 @@ export class UserService {
     await this.userRepository.saveUser(targetUser);
 
     return targetUser;
+  }
+
+  async uploadUserAvatar(userId: string, file: Express.Multer.File) {
+    const targetUser = await this.userRepository.findById(userId);
+
+    if (!targetUser) {
+      throw new NotFoundError(`User with id ${userId} not found.`);
+    }
+
+    if (targetUser.avatarPublicId) {
+      await cloudinary.uploader.destroy(targetUser.avatarPublicId);
+    }
+
+    const result = await this.cloudinaryService.upload(file.buffer);
+    await this.userRepository.userUpdate(userId, {
+      avatar: result.secure_url,
+      avatarPublicId: result.public_id,
+    });
   }
 
   /*******************************************************

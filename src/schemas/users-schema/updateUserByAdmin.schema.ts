@@ -5,7 +5,7 @@ export const updateUserByAdminSchema = z.object({
   body: z.object({
     fullName: z.string().optional(),
     email: z.string().email("Invalid email address").optional(),
-    photo: z.string().optional(),
+    avatar: z.string().optional(),
     active: z.boolean().optional(),
   }),
   params: z.object({

@@ -1,6 +1,6 @@
 export interface IUpdateCurrentUserInfoDto {
   fullName?: string;
   email?: string;
-  photo?: string;
+  avatar?: string;
   password?: string; // just for type checking
 }

@@ -24,7 +24,10 @@ export class User {
   fullName: string;
 
   @Column({ nullable: true })
-  photo: string;
+  avatar?: string;
+
+  @Column({ nullable: true })
+  avatarPublicId?: string;
 
   @Column({ select: false })
   password: string;

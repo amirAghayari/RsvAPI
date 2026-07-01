@@ -48,7 +48,7 @@ const createSendTokenAndResponse = async (
     .json({
       status: "success",
       data: {
-        user: _.pick(user, ["id", "name", "email", "role", "photo"]),
+        user: _.pick(user, ["id", "name", "email", "role", "avatar"]),
       },
     });
 };

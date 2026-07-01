@@ -38,7 +38,7 @@ export class AuthService {
         "email",
         "role",
         "password",
-        "photo",
+        "avatar",
         "createdAt",
       ],
     });
