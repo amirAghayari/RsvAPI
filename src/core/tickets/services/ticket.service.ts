@@ -156,15 +156,15 @@ export class TicketService {
    ******************************************************/
 
   async deleteTicket(ticketId: string): Promise<void> {
-    const ticket = await this.ticketRepository.findById(ticketId, {
+    const targetTicket = await this.ticketRepository.findById(ticketId, {
       relations: ["reservations"],
     });
 
-    if (!ticket) {
-      throw new NotFoundError("Ticket not found.");
+    if (!targetTicket) {
+      throw new NotFoundError(`Ticket with this id:${ticketId} not found. `);
     }
 
-    if (ticket.reservations.length > 0) {
+    if (targetTicket.reservations.length > 0) {
       throw new BadRequestError("Cannot delete a ticket with reservations.");
     }
 
