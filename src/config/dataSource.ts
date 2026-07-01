@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import { User } from "../core/users/user.entity";
 import { Event } from "../core/events/event.entity";
 import { Reservation } from "../core/reservations/reservation.entity";
+import { Ticket } from "../core/tickets/ticket.entity";
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ const AppDataSource = new DataSource({
   synchronize: true,
   logging: true,
   // TODO : add another entities
-  entities: [User, Reservation, Event],
+  entities: [User, Reservation, Event, Ticket],
   migrations: ["src/migrations/**/*.ts"],
 });
 

@@ -7,14 +7,23 @@ import { AuthController } from "./users/controllers/auth.controller";
 import { EventRepository } from "./events/event.repository";
 import { EventService } from "./events/services/event.service";
 import { EventController } from "./events/controllers/event.controller";
+import { CloudinaryService } from "./cloudinary/services/cloudinary.service";
+import { TicketService } from "./tickets/services/ticket.service";
+import { TicketRepository } from "./tickets/ticket.repository";
 
 export const userRepository = new UserRepository(AppDataSource);
 export const eventRepository = new EventRepository(AppDataSource);
+export const ticketRepository = new TicketRepository(AppDataSource);
 
-export const userService = new UserService(userRepository);
+export const cloudinaryService = new CloudinaryService();
+export const userService = new UserService(userRepository, cloudinaryService);
 export const authService = new AuthService(userRepository);
 
-export const eventService = new EventService(eventRepository);
+export const ticketService = new TicketService(
+  ticketRepository,
+  eventRepository,
+);
+export const eventService = new EventService(eventRepository, ticketRepository);
 
 export const userController = new UserController(userService);
 export const authController = new AuthController(authService);
