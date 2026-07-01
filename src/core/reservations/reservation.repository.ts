@@ -1,7 +1,12 @@
-import { DataSource, DeepPartial, EntityManager, Repository } from "typeorm";
-import { Reservation } from "./reservation.entity";
+import {
+  DataSource,
+  DeepPartial,
+  EntityManager,
+  LessThan,
+  Repository,
+} from "typeorm";
 import APIFeatures from "../../utils/apiFeatures";
-
+import { Reservation } from "./reservation.entity";
 import { IUpdateReservationDto } from "./dtos/update-reservation.dto";
 import { NotFoundError } from "../../errors/not-found-error";
 import { ReservationStatus } from "../../utils/reservation.status";
@@ -25,15 +30,20 @@ export class ReservationRepository {
    ********************************************************/
 
   async findAll(query: any, manager?: EntityManager) {
-    const feature = new APIFeatures<Reservation>(this.repo(manager), query);
+    const features = new APIFeatures<Reservation>(this.repo(manager), query);
 
-    feature.filter().sort().search().limitFields();
+    features.filter().sort().search().limitFields();
 
-    const { pagination, total, skip } = await feature.pagination();
+    const { pagination, total, skip } = await features.pagination();
 
-    const reservations = await feature.execute();
+    const reservations = await features.execute();
 
-    return { pagination, skip, total, reservations };
+    return {
+      pagination,
+      total,
+      skip,
+      reservations,
+    };
   }
 
   async findById(
@@ -50,12 +60,23 @@ export class ReservationRepository {
       where: { id },
     };
 
-    if (select && select.length) queryOption.select = select;
-    if (relations && relations.length) queryOption.relations = relations;
+    if (select?.length) queryOption.select = select;
+    if (relations?.length) queryOption.relations = relations;
 
-    const reservation = await this.repo(manager).findOne(queryOption);
+    return await this.repo(manager).findOne(queryOption);
+  }
 
-    return reservation;
+  // Used inside transactions
+  async findByIdForUpdate(
+    id: string,
+    manager: EntityManager,
+  ): Promise<Reservation | null> {
+    return await manager
+      .getRepository(Reservation)
+      .createQueryBuilder("reservation")
+      .setLock("pessimistic_write")
+      .where("reservation.id = :id", { id })
+      .getOne();
   }
 
   async findByUserId(
@@ -63,90 +84,104 @@ export class ReservationRepository {
     option?: {
       select?: (keyof Reservation)[];
       relations?: string[];
-      order?: Record<string, string>;
+      order?: Record<string, "ASC" | "DESC">;
     },
     manager?: EntityManager,
-  ): Promise<Reservation | null> {
+  ): Promise<Reservation[]> {
     const { select, relations, order } = option || {};
 
     const queryOption: any = {
       where: { userId },
     };
 
-    if (select && select.length) queryOption.select = select;
-    if (relations && relations.length) queryOption.relations = relations;
+    if (select?.length) queryOption.select = select;
+    if (relations?.length) queryOption.relations = relations;
     if (order) queryOption.order = order;
 
-    const reservation = await this.repo(manager).findOne(queryOption);
-
-    return reservation;
+    return await this.repo(manager).find(queryOption);
   }
 
-  async findByEventId(
-    eventId: string,
+  async findByTicketId(
+    ticketId: string,
     option?: {
       select?: (keyof Reservation)[];
       relations?: string[];
-      order?: Record<string, string>;
+      order?: Record<string, "ASC" | "DESC">;
     },
     manager?: EntityManager,
-  ): Promise<Reservation | null> {
+  ): Promise<Reservation[]> {
     const { select, relations, order } = option || {};
 
     const queryOption: any = {
-      where: { eventId },
+      where: { ticketId },
     };
 
-    if (select && select.length) queryOption.select = select;
-    if (relations && relations.length) queryOption.relations = relations;
+    if (select?.length) queryOption.select = select;
+    if (relations?.length) queryOption.relations = relations;
     if (order) queryOption.order = order;
 
-    const reservation = await this.repo(manager).findOne(queryOption);
-
-    return reservation;
+    return await this.repo(manager).find(queryOption);
   }
 
-  async findByUserAndEventId(
+  async findByUserAndTicketId(
     userId: string,
-    eventId: string,
+    ticketId: string,
     option?: {
       select?: (keyof Reservation)[];
       relations?: string[];
-      order?: Record<string, string>;
     },
     manager?: EntityManager,
   ): Promise<Reservation | null> {
-    const { select, relations, order } = option || {};
+    const { select, relations } = option || {};
 
     const queryOption: any = {
-      where: { eventId, userId },
+      where: {
+        userId,
+        ticketId,
+      },
     };
 
-    if (select && select.length) queryOption.select = select;
-    if (relations && relations.length) queryOption.relations = relations;
-    if (order) queryOption.order = order;
+    if (select?.length) queryOption.select = select;
+    if (relations?.length) queryOption.relations = relations;
 
-    const reservation = await this.repo(manager).findOne(queryOption);
-
-    return reservation;
+    return await this.repo(manager).findOne(queryOption);
   }
 
-  async countByEvent(
-    eventId: string,
+  async findPendingReservation(
+    userId: string,
+    ticketId: string,
     manager?: EntityManager,
-  ): Promise<number> {
-    return await this.repo(manager).count({
-      where: { eventId },
+  ): Promise<Reservation | null> {
+    return await this.repo(manager).findOne({
+      where: {
+        userId,
+        ticketId,
+        status: ReservationStatus.PENDING,
+      },
     });
   }
 
   async existsReservation(
     userId: string,
-    eventId: string,
+    ticketId: string,
     manager?: EntityManager,
   ): Promise<boolean> {
     return await this.repo(manager).exists({
-      where: { userId, eventId },
+      where: {
+        userId,
+        ticketId,
+      },
+    });
+  }
+
+  async countByTicket(
+    ticketId: string,
+    manager?: EntityManager,
+  ): Promise<number> {
+    return await this.repo(manager).count({
+      where: {
+        ticketId,
+      },
     });
   }
 
@@ -156,40 +191,54 @@ export class ReservationRepository {
   ): Promise<Reservation[]> {
     return await this.repo(manager).find({
       where: {
-        status: status,
+        status,
       },
     });
   }
 
-  /*************************************************************
-   ************* @description CREATE OPERATIONS ****************
-   *************************************************************/
+  async findExpiredReservations(
+    manager?: EntityManager,
+  ): Promise<Reservation[]> {
+    return await this.repo(manager).find({
+      where: {
+        status: ReservationStatus.PENDING,
+        expiresAt: LessThan(new Date()),
+      },
+    });
+  }
+
+  /********************************************************
+   ************* @description CREATE OPERATIONS ***********
+   ********************************************************/
 
   async createReservation(
     data: DeepPartial<Reservation>,
     manager?: EntityManager,
   ): Promise<Reservation> {
-    const newReservation = this.repo(manager).create(data);
-    return await this.saveReservation(newReservation, manager);
+    const reservation = this.repo(manager).create(data);
+
+    return await this.saveReservation(reservation, manager);
   }
 
-  /************************************************************
-   ************* @description UPDATE OPERATIONS ***************
-   ************************************************************/
+  /********************************************************
+   ************* @description UPDATE OPERATIONS ***********
+   ********************************************************/
+
   async updateReservation(
     id: string,
-    updateReservationDto: IUpdateReservationDto,
+    payload: IUpdateReservationDto,
     manager?: EntityManager,
-  ): Promise<Reservation | null> {
-    const result = await this.repo(manager).update(id, updateReservationDto);
-    if (result.affected === 0) {
-      throw new NotFoundError(`Event with id ${id} not found`);
+  ): Promise<Reservation> {
+    const result = await this.repo(manager).update(id, payload);
+
+    if (!result.affected) {
+      throw new NotFoundError(`Reservation with id ${id} not found.`);
     }
+
     const updatedReservation = await this.findById(id, undefined, manager);
+
     if (!updatedReservation) {
-      throw new NotFoundError(
-        `Reservation with id ${id} not found after update`,
-      );
+      throw new NotFoundError(`Reservation with id ${id} not found.`);
     }
 
     return updatedReservation;
@@ -199,27 +248,35 @@ export class ReservationRepository {
     id: string,
     status: ReservationStatus,
     manager?: EntityManager,
-  ) {
-    await this.repo(manager).update(id, { status });
+  ): Promise<void> {
+    const result = await this.repo(manager).update(id, {
+      status,
+    });
+
+    if (!result.affected) {
+      throw new NotFoundError(`Reservation with id ${id} not found.`);
+    }
   }
-  /************************************************************
-   ************* @description DELETE OPERATIONS ***************
-   ************************************************************/
+
+  /********************************************************
+   ************* @description DELETE OPERATIONS ***********
+   ********************************************************/
+
   async deleteReservation(
     id: string,
     manager?: EntityManager,
   ): Promise<{ success: boolean; message: string }> {
-    const reservation = await this.repo(manager).findOne({ where: { id } });
+    const reservation = await this.findById(id, undefined, manager);
 
     if (!reservation) {
-      throw new NotFoundError(`Reservation with id ${id} not found`);
+      throw new NotFoundError(`Reservation with id ${id} not found.`);
     }
 
     await this.repo(manager).remove(reservation);
 
     return {
       success: true,
-      message: `Reservation with id ${id} deleted successfully`,
+      message: `Reservation with id ${id} deleted successfully.`,
     };
   }
 }
