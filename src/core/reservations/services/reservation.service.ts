@@ -67,7 +67,7 @@ export class ReservationService {
       select?: (keyof Reservation)[];
       relations?: string[];
     },
-  ): Promise<Reservation | null> {
+  ): Promise<Reservation[] | null> {
     const user = await this.userRepository.findById(userId);
 
     const targetReservation = await this.reservationRepository.findByUserId(
@@ -88,53 +88,53 @@ export class ReservationService {
     return targetReservation;
   }
 
-  async getReservationByEventId(
-    eventId: string,
+  async getReservationByTicketId(
+    ticketId: string,
     option: {
       select?: (keyof Reservation)[];
       relations?: string[];
     },
-  ): Promise<Reservation | null> {
-    const event = await this.eventRepository.findById(eventId);
+  ): Promise<Reservation[] | null> {
+    const ticket = await this.ticketRepository.findById(ticketId);
 
-    const targetReservation = await this.reservationRepository.findByEventId(
-      eventId,
+    const targetReservation = await this.reservationRepository.findByTicketId(
+      ticketId,
       option,
     );
 
-    if (!event) {
-      throw new NotFoundError(`User with this id : ${eventId} not found.`);
+    if (!ticket) {
+      throw new NotFoundError(`Ticket with this id : ${ticketId} not found.`);
     }
 
     if (!targetReservation) {
       throw new NotFoundError(
-        `No reservations were found for this event with this ID : ${eventId}.`,
+        `No reservations were found for this event with this ID : ${ticketId}.`,
       );
     }
 
     return targetReservation;
   }
 
-  async getReservationByUserAndEventId(
+  async getReservationByUserAndTicketId(
     userId: string,
-    eventId: string,
+    ticketId: string,
     option?: {
       select?: (keyof Reservation)[];
       relations?: string[];
     },
   ): Promise<Reservation | null> {
-    const event = await this.eventRepository.findById(eventId);
+    const ticket = await this.ticketRepository.findById(ticketId);
     const user = await this.userRepository.findById(userId);
 
     const targetReservation =
-      await this.reservationRepository.findByUserAndEventId(
+      await this.reservationRepository.findByUserAndTicketId(
         userId,
-        eventId,
+        ticketId,
         option,
       );
 
-    if (!event) {
-      throw new NotFoundError(`Event with this id : ${eventId} not found.`);
+    if (!ticket) {
+      throw new NotFoundError(`Ticket with this id : ${ticketId} not found.`);
     }
     if (!user) {
       throw new NotFoundError(`User with this id : ${userId} not found.`);
@@ -142,34 +142,27 @@ export class ReservationService {
 
     if (!targetReservation) {
       throw new NotFoundError(
-        `No reservations were found for this event with this ID : ${eventId} and user with this ID : ${userId}.`,
+        `No reservations were found for this ticket with this ID : ${ticketId} and user with this ID : ${userId}.`,
       );
     }
 
     return targetReservation;
   }
 
-  async reservationCountByEvent(eventId: string): Promise<number> {
-    const count = await this.reservationRepository.countByEvent(eventId);
-
-    if (count == 0) {
-      throw new NotFoundError(`Reservation not found for event ${eventId}`);
-    }
-
-    return count;
-  }
-
-  async reservationIsExists(userId: string, eventId: string): Promise<boolean> {
-    const event = await this.eventRepository.findById(eventId);
+  async reservationIsExists(
+    userId: string,
+    ticketId: string,
+  ): Promise<boolean> {
+    const ticket = await this.ticketRepository.findById(ticketId);
     const user = await this.userRepository.findById(userId);
 
     const exists: boolean = await this.reservationRepository.existsReservation(
       userId,
-      eventId,
+      ticketId,
     );
 
-    if (!event) {
-      throw new NotFoundError(`Event with this id : ${eventId} not found.`);
+    if (!ticket) {
+      throw new NotFoundError(`Ticket with this id : ${ticketId} not found.`);
     }
     if (!user) {
       throw new NotFoundError(`User with this id : ${userId} not found.`);
@@ -314,37 +307,227 @@ export class ReservationService {
   /******************************************************
    ************* @description Patch HANDLERS *************
    ******************************************************/
+  async confirmReservationPayment(reservationId: string): Promise<Reservation> {
+    return await this.dataSource.transaction(async (manager) => {
+      /******************************************************
+       **************** LOCK RESERVATION *********************
+       ******************************************************/
 
-  async updateReservationStatus(
-    id: string,
-    status: ReservationStatus,
-  ): Promise<Reservation | null> {
-    const targetReservation = await this.reservationRepository.findById(id);
-
-    if (!targetReservation) {
-      throw new NotFoundError(`Reservation with id : ${id} not found.`);
-    }
-
-    if (
-      targetReservation.status === ReservationStatus.EXPIRED ||
-      targetReservation.status === ReservationStatus.CANCELED
-    ) {
-      throw new BadRequestError(
-        "Cannot update the expired or canceled reservation.",
+      const reservation = await this.reservationRepository.findByIdForUpdate(
+        reservationId,
+        manager,
       );
-    }
-    if (targetReservation.status === ReservationStatus.PAID) {
-      throw new BadRequestError("Cannot update the paid reservation.");
-    }
 
-    await this.reservationRepository.updateReservationStatus(id, status);
-    const updatedReservation = await this.reservationRepository.findById(id, {
-      select: ["status"],
+      if (!reservation) {
+        throw new NotFoundError(
+          `Reservation with id ${reservationId} not found.`,
+        );
+      }
+
+      /******************************************************
+       ******************** VALIDATION ***********************
+       ******************************************************/
+
+      if (reservation.status === ReservationStatus.CONFIRMED) {
+        throw new BadRequestError("Reservation already confirmed.");
+      }
+
+      if (reservation.status === ReservationStatus.CANCELED) {
+        throw new BadRequestError("Reservation has been canceled.");
+      }
+
+      if (reservation.status === ReservationStatus.EXPIRED) {
+        throw new BadRequestError("Reservation has expired.");
+      }
+
+      if (reservation.expiresAt < new Date()) {
+        throw new BadRequestError("Reservation has expired.");
+      }
+
+      /******************************************************
+       ******************** LOCK TICKET **********************
+       ******************************************************/
+
+      const ticket = await this.ticketRepository.findByIdForUpdate(
+        reservation.ticketId,
+        manager,
+      );
+
+      if (!ticket) {
+        throw new NotFoundError(
+          `Ticket with id ${reservation.ticketId} not found.`,
+        );
+      }
+
+      /******************************************************
+       **************** UPDATE RESERVATION *******************
+       ******************************************************/
+
+      reservation.status = ReservationStatus.CONFIRMED;
+      reservation.paidAt = new Date();
+
+      await this.reservationRepository.saveReservation(reservation, manager);
+
+      return reservation;
     });
-
-    return updatedReservation;
   }
 
+  async cancelReservation(
+    reservationId: string,
+    userId: string,
+  ): Promise<Reservation> {
+    return await this.dataSource.transaction(async (manager) => {
+      /******************************************************
+       **************** LOCK RESERVATION *********************
+       ******************************************************/
+
+      const reservation = await this.reservationRepository.findByIdForUpdate(
+        reservationId,
+        manager,
+      );
+
+      if (!reservation) {
+        throw new NotFoundError(
+          `Reservation with id ${reservationId} not found.`,
+        );
+      }
+
+      /******************************************************
+       ******************** OWNERSHIP ***********************
+       ******************************************************/
+
+      if (reservation.userId !== userId) {
+        throw new BadRequestError(
+          "You are not allowed to cancel this reservation.",
+        );
+      }
+
+      /******************************************************
+       ******************** VALIDATION **********************
+       ******************************************************/
+
+      switch (reservation.status) {
+        case ReservationStatus.CANCELED:
+          throw new BadRequestError("Reservation already canceled.");
+
+        case ReservationStatus.EXPIRED:
+          throw new BadRequestError("Reservation already expired.");
+
+        case ReservationStatus.CONFIRMED:
+          throw new BadRequestError("Paid reservations cannot be canceled.");
+      }
+
+      /******************************************************
+       ********************* TICKET *************************
+       ******************************************************/
+
+      const ticket = await this.ticketRepository.findByIdForUpdate(
+        reservation.ticketId,
+        manager,
+      );
+
+      if (!ticket) {
+        throw new NotFoundError(
+          `Ticket with id ${reservation.ticketId} not found.`,
+        );
+      }
+
+      /******************************************************
+       **************** RELEASE CAPACITY ********************
+       ******************************************************/
+
+      ticket.reservedCount -= reservation.quantity;
+
+      if (ticket.reservedCount < 0) {
+        ticket.reservedCount = 0;
+      }
+
+      await this.ticketRepository.saveTicket(ticket, manager);
+
+      /******************************************************
+       **************** UPDATE RESERVATION ******************
+       ******************************************************/
+
+      reservation.status = ReservationStatus.CANCELED;
+
+      await this.reservationRepository.saveReservation(reservation, manager);
+
+      return reservation;
+    });
+  }
+
+  async expireReservation(reservationId: string): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      /******************************************************
+       **************** LOCK RESERVATION *********************
+       ******************************************************/
+
+      const reservation = await this.reservationRepository.findByIdForUpdate(
+        reservationId,
+        manager,
+      );
+
+      if (!reservation) {
+        return;
+      }
+
+      /******************************************************
+       ******************* VALIDATION ************************
+       ******************************************************/
+
+      if (reservation.status !== ReservationStatus.PENDING) {
+        return;
+      }
+
+      if (reservation.expiresAt > new Date()) {
+        return;
+      }
+
+      /******************************************************
+       ********************* TICKET **************************
+       ******************************************************/
+
+      const ticket = await this.ticketRepository.findByIdForUpdate(
+        reservation.ticketId,
+        manager,
+      );
+
+      if (!ticket) {
+        throw new NotFoundError(
+          `Ticket with id ${reservation.ticketId} not found.`,
+        );
+      }
+
+      /******************************************************
+       **************** RELEASE CAPACITY *********************
+       ******************************************************/
+
+      ticket.reservedCount -= reservation.quantity;
+
+      if (ticket.reservedCount < 0) {
+        ticket.reservedCount = 0;
+      }
+
+      await this.ticketRepository.saveTicket(ticket, manager);
+
+      /******************************************************
+       **************** UPDATE RESERVATION *******************
+       ******************************************************/
+
+      reservation.status = ReservationStatus.EXPIRED;
+
+      await this.reservationRepository.saveReservation(reservation, manager);
+    });
+  }
+
+  async expireReservations(): Promise<void> {
+    const reservations =
+      await this.reservationRepository.findExpiredReservations();
+
+    for (const reservation of reservations) {
+      await this.expireReservation(reservation.id);
+    }
+  }
   /******************************************************
    ************* @description DELETE HANDLERS *************
    ******************************************************/
