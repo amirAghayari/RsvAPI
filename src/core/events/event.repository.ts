@@ -77,7 +77,7 @@ export class EventRepository {
     createEventDto: ICreateEventDto,
     manager?: EntityManager,
   ): Promise<Event> {
-    const newEvent = await this.repo(manager).create(createEventDto);
+    const newEvent = this.repo(manager).create(createEventDto);
 
     return await this.saveEvent(newEvent, manager);
   }

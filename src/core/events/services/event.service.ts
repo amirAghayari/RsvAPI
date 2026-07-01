@@ -5,9 +5,13 @@ import { ICreateEventDto } from "../dtos/create-event.dto";
 import { IUpdateEventDto } from "../dtos/update-event.dto";
 import { BadRequestError } from "../../../errors/bad-request-error";
 import { EventStatus } from "../../../utils/event.status";
+import { TicketRepository } from "../../tickets/ticket.repository";
 
 export class EventService {
-  constructor(private readonly eventRepository: EventRepository) {}
+  constructor(
+    private readonly eventRepository: EventRepository,
+    private readonly ticketRepository: TicketRepository,
+  ) {}
 
   /******************************************************
    ************* @description GET HANDLERS *************
@@ -45,30 +49,25 @@ export class EventService {
    ************* @description POST HANDLERS *************
    ******************************************************/
   async createEvent(createEventDto: ICreateEventDto): Promise<Event> {
-    const now = new Date();
-    const salesStartTime = new Date(createEventDto.salesStartTime);
-    const salesEndTime = new Date(createEventDto.salesEndTime);
+    if (Object.keys(createEventDto).length === 0) {
+      throw new BadRequestError("No fields provided for create.");
+    }
 
-    if (salesStartTime <= now) {
+    const now = new Date();
+    const startsAt = new Date(createEventDto.startsAt);
+    const endsAt = new Date(createEventDto.endsAt);
+
+    if (startsAt < now) {
       throw new BadRequestError(
         "Start time cannot be in the past. Please choose a future time.",
       );
     }
 
-    if (salesEndTime <= now) {
-      throw new BadRequestError(
-        "End time cannot be in the past. Please choose a future time.",
-      );
-    }
-
-    if (salesEndTime <= salesStartTime) {
+    if (endsAt < startsAt) {
       throw new BadRequestError("End time must be after start time.");
     }
 
-    const remainingCapacity = createEventDto.capacity;
-    const newEventInput = { remainingCapacity, ...createEventDto };
-
-    const newEvent = await this.eventRepository.createEvent(newEventInput);
+    const newEvent = await this.eventRepository.createEvent(createEventDto);
 
     return newEvent;
   }
@@ -76,85 +75,151 @@ export class EventService {
   /*******************************************************
    ************* @description PATCH HANDLERS *************
    *******************************************************/
-
   async updateEvent(
     eventId: string,
     updateEventDto: IUpdateEventDto,
-  ): Promise<Event | null> {
+  ): Promise<Event> {
     const targetEvent = await this.eventRepository.findById(eventId);
+
     if (!targetEvent) {
-      throw new NotFoundError("Event with this id not found.");
+      throw new NotFoundError(`Event with id ${eventId} not found.`);
+    }
+
+    if (Object.keys(updateEventDto).length === 0) {
+      throw new BadRequestError("No fields provided for update.");
     }
 
     const now = new Date();
+
+    /********************************************************
+     **************** STATUS VALIDATION **********************
+     ********************************************************/
 
     if (updateEventDto.status) {
       const currentStatus = targetEvent.status;
       const newStatus = updateEventDto.status;
 
-      if (
-        currentStatus === EventStatus.DRAFT &&
-        newStatus !== EventStatus.PUBLISHED
-      ) {
-        throw new BadRequestError(`From DRAFT you can only go to PUBLISHED.`);
-      }
-
-      if (
-        currentStatus === EventStatus.PUBLISHED &&
-        newStatus === EventStatus.DRAFT
-      ) {
+      if (currentStatus === newStatus) {
         throw new BadRequestError(
-          `From PUBLISHED you can only go to CANCELED or FINISHED.`,
+          `Event is already in ${currentStatus} status.`,
         );
       }
 
-      // if (newStatus === EventStatus.FINISHED) {
-      //   const endTime = new Date(targetEvent.salesEndTime);
-      //   if (endTime > now) {
-      //     throw new BadRequestError(`Cannot finish before sales end time.`);
-      //   }
-      // }
+      switch (currentStatus) {
+        case EventStatus.DRAFT:
+          if (
+            ![EventStatus.PUBLISHED, EventStatus.CANCELED].includes(newStatus)
+          ) {
+            throw new BadRequestError(
+              "From DRAFT you can only change to PUBLISHED or CANCELED.",
+            );
+          }
+          break;
 
-      if (
-        currentStatus === EventStatus.CANCELED ||
-        currentStatus === EventStatus.FINISHED
-      ) {
-        throw new BadRequestError(
-          `Cannot change from final state: ${currentStatus}`,
+        case EventStatus.PUBLISHED:
+          if (
+            ![EventStatus.IN_PROGRESS, EventStatus.CANCELED].includes(newStatus)
+          ) {
+            throw new BadRequestError(
+              "From PUBLISHED you can only change to IN_PROGRESS or CANCELED.",
+            );
+          }
+          break;
+
+        case EventStatus.IN_PROGRESS:
+          if (
+            ![EventStatus.FINISHED, EventStatus.CANCELED].includes(newStatus)
+          ) {
+            throw new BadRequestError(
+              "From IN_PROGRESS you can only change to FINISHED or CANCELED.",
+            );
+          }
+          break;
+
+        case EventStatus.CANCELED:
+        case EventStatus.FINISHED:
+          throw new BadRequestError(
+            `Cannot change status from ${currentStatus}.`,
+          );
+      }
+
+      /******************************************************
+       *************** PUBLISH VALIDATIONS ******************
+       ******************************************************/
+
+      if (newStatus === EventStatus.PUBLISHED) {
+        if (targetEvent.startsAt <= now) {
+          throw new BadRequestError(
+            "Cannot publish an event that has already started.",
+          );
+        }
+
+        const tickets = await this.ticketRepository.findByEventId(eventId);
+
+        if (!tickets.length) {
+          throw new BadRequestError(
+            "Event must have at least one ticket before publishing.",
+          );
+        }
+
+        const invalidTicket = tickets.find(
+          (ticket) =>
+            ticket.capacity <= 0 || ticket.saleStartsAt >= ticket.saleEndsAt,
         );
+
+        if (invalidTicket) {
+          throw new BadRequestError(
+            "All tickets must have valid capacity and sale period before publishing.",
+          );
+        }
       }
     }
 
-    if (updateEventDto.salesStartTime) {
-      const salesStartTime = new Date(updateEventDto.salesStartTime);
-      if (salesStartTime <= now) {
-        throw new BadRequestError(
-          "Start time cannot be in the past. Please choose a future time.",
-        );
-      }
-    }
-    if (updateEventDto.salesEndTime) {
-      const salesEndTime = new Date(updateEventDto.salesEndTime);
-      if (salesEndTime <= now) {
-        throw new BadRequestError(
-          "End time cannot be in the past. Please choose a future time.",
-        );
-      }
+    /********************************************************
+     **************** DATE VALIDATION ************************
+     ********************************************************/
+
+    if (
+      targetEvent.status !== EventStatus.DRAFT &&
+      (updateEventDto.startsAt || updateEventDto.endsAt)
+    ) {
+      throw new BadRequestError(
+        "Cannot change event schedule after publishing.",
+      );
     }
 
-    if (updateEventDto.salesStartTime && updateEventDto.salesEndTime) {
-      const start = new Date(updateEventDto.salesStartTime);
-      const end = new Date(updateEventDto.salesEndTime);
-      if (end <= start) {
-        throw new BadRequestError("End time must be after start time.");
-      }
+    const startsAt = updateEventDto.startsAt
+      ? new Date(updateEventDto.startsAt)
+      : targetEvent.startsAt;
+
+    const endsAt = updateEventDto.endsAt
+      ? new Date(updateEventDto.endsAt)
+      : targetEvent.endsAt;
+
+    if (startsAt <= now) {
+      throw new BadRequestError("Event start time must be in the future.");
     }
-    const updateEvent = await this.eventRepository.updateEvent(
+
+    if (endsAt <= startsAt) {
+      throw new BadRequestError("Event end time must be after start time.");
+    }
+
+    /********************************************************
+     **************** UPDATE EVENT ***************************
+     ********************************************************/
+
+    const updatedEvent = await this.eventRepository.updateEvent(
       eventId,
       updateEventDto,
     );
 
-    return updateEvent;
+    if (!updatedEvent) {
+      throw new NotFoundError(
+        `Event with id ${eventId} not found after update.`,
+      );
+    }
+
+    return updatedEvent;
   }
 
   /*******************************************************
@@ -170,7 +235,7 @@ export class EventService {
     if (
       targetEvent.status === EventStatus.PUBLISHED ||
       targetEvent.status === EventStatus.FINISHED ||
-      targetEvent.status === EventStatus.SOLD_OUT
+      targetEvent.status === EventStatus.IN_PROGRESS
     ) {
       throw new BadRequestError("Cannot delete a published or finished event.");
     }

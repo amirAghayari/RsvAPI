@@ -26,7 +26,10 @@ export class Event {
   location: string;
 
   @Column({ type: "timestamp" })
-  executionDate: Date;
+  startsAt: Date;
+
+  @Column({ type: "timestamp" })
+  endsAt: Date;
 
   @Index()
   @Column({

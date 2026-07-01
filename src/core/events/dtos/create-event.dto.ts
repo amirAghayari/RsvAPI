@@ -1,11 +1,8 @@
 export interface ICreateEventDto {
   title: string;
-  userId: string;
-  price: number;
+  description?: string;
   location: string;
-  capacity: number;
-  remainingCapacity?: number;
-  executionDate: Date;
-  salesStartTime: Date;
-  salesEndTime: Date;
+  startsAt: Date;
+  endsAt: Date;
+  userId: string;
 }
