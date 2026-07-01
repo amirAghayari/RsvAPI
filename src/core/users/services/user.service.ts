@@ -9,7 +9,7 @@ import { IUpdateCurrentUserInfoDto } from "../dtos/update-currentuser.dto";
 import { IUpdateUserDto } from "../dtos/update-user.dto";
 import { User } from "../user.entity";
 import { UserRepository } from "../user.repository";
-import cloudinary from "../../reservations/controllers/cloudinary";
+import cloudinary from "../../../config/cloudinary";
 
 export class UserService {
   constructor(

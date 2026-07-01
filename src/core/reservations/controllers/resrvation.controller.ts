@@ -123,4 +123,31 @@ export class ReservationController {
       data: { reservation },
     });
   }
+
+  /*************************************************************
+   ************* @description PATCH OPERATIONS ****************
+   *************************************************************/
+
+  async updateReservationStatus(req: Request, res: Response) {
+    const reservation = await this.reservationService.updateReservationStatus(
+      req.params.id,
+      req.body.status as ReservationStatus,
+    );
+    res.status(201).json({
+      status: "success",
+      data: { reservation },
+    });
+  }
+
+  /*************************************************************
+   ************* @description PATCH OPERATIONS ****************
+   *************************************************************/
+
+  async deleteReservation(req: Request, res: Response) {
+    await this.reservationService.deleteReservation(req.params.id);
+    res.status(204).json({
+      status: "success",
+      data: null,
+    });
+  }
 }

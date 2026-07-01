@@ -1,6 +1,6 @@
 import streamifier from "streamifier";
 
-import cloudinary from "../../reservations/controllers/cloudinary";
+import cloudinary from "../../../config/cloudinary";
 import { UploadApiResponse } from "cloudinary";
 import { BadRequestError } from "../../../errors/bad-request-error";
 
