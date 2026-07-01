@@ -9,10 +9,9 @@ import {
 } from "typeorm";
 import { ReservationStatus } from "../../utils/reservation.status";
 import { User } from "../users/user.entity";
-import { Event } from "../events/event.entity";
+import { Ticket } from "../tickets/ticket.entity";
 
-// TODO : reservation : update relations , structure
-@Index(["userId", "eventId"], { unique: true })
+@Index(["userId", "ticketId"], { unique: true })
 @Entity("reservations")
 export class Reservation {
   @PrimaryGeneratedColumn("uuid")
@@ -26,27 +25,45 @@ export class Reservation {
   })
   status: ReservationStatus;
 
-  @ManyToOne(() => User, (user) => user.reservations, { nullable: false })
+  @ManyToOne(() => User, (user) => user.reservations, {
+    nullable: false,
+    onDelete: "CASCADE",
+  })
   @JoinColumn({ name: "userId" })
   user: User;
 
   @Column("uuid")
   userId: string;
 
-  @ManyToOne(() => Event, (event) => event.reservations)
-  @JoinColumn({ name: "eventId" })
-  event: Event;
+  @ManyToOne(() => Ticket, (ticket) => ticket.reservations, {
+    nullable: false,
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "ticketId" })
+  ticket: Ticket;
 
   @Column("uuid")
-  eventId: string;
+  ticketId: string;
+
+  @Column({
+    type: "integer",
+    default: 1,
+  })
+  quantity: number;
 
   @Index()
-  @Column({ type: "timestamp", nullable: true })
+  @Column({
+    type: "timestamp",
+    nullable: true,
+  })
   expiresAt: Date;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({
+    type: "timestamp",
+    nullable: true,
+  })
   paidAt: Date;
 
-  @CreateDateColumn({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
+  @CreateDateColumn()
   createdAt: Date;
 }

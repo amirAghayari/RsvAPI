@@ -7,42 +7,26 @@ import {
   Index,
   JoinColumn,
 } from "typeorm";
-import { Reservation } from "../reservations/reservation.entity";
 import { EventStatus } from "../../utils/event.status";
 import { User } from "../users/user.entity";
+import { Ticket } from "../tickets/ticket.entity";
 
 @Entity("events")
 export class Event {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  // TODO : del nullable
-  @Column({ nullable: true, length: 255 })
+  @Column({ length: 255 })
   title: string;
 
-  @Column({ type: "integer", nullable: true })
-  price: number;
+  @Column({ type: "text", nullable: true })
+  description: string;
 
-  @Column({ type: "integer", nullable: true })
-  capacity: number;
-
-  @Column({
-    type: "integer",
-    nullable: true,
-  })
-  remainingCapacity: number;
+  @Column()
+  location: string;
 
   @Column({ type: "timestamp" })
   executionDate: Date;
-
-  @Column({ type: "timestamp" })
-  salesStartTime: Date;
-
-  @Column({ type: "timestamp", nullable: true })
-  salesEndTime: Date;
-
-  @Column({ nullable: true })
-  location: string;
 
   @Index()
   @Column({
@@ -52,17 +36,15 @@ export class Event {
   })
   status: EventStatus;
 
-  @Column({ nullable: true })
+  @Column("uuid")
   userId: string;
 
   @ManyToOne(() => User, (user) => user.event, {
     onDelete: "CASCADE",
   })
-  @JoinColumn({
-    name: "userId",
-  })
+  @JoinColumn({ name: "userId" })
   user: User;
 
-  @OneToMany(() => Reservation, (reservation) => reservation.event)
-  reservations: Reservation[];
+  @OneToMany(() => Ticket, (ticket) => ticket.event)
+  tickets: Ticket[];
 }
