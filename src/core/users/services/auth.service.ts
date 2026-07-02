@@ -4,6 +4,7 @@ import { NotAuthorizedError } from "../../../errors/not-authorized-error";
 import { NotFoundError } from "../../../errors/not-found-error";
 import { sendEmail } from "../../../utils/email";
 import { verifyRefreshToken } from "../../../utils/jwt";
+import { IForgotPasswordDto } from "../dtos/forgot.password.dto";
 import { ILoginDto } from "../dtos/login.dto";
 import { IResetPasswordDto } from "../dtos/reset.password.dto";
 import { ISignupDto } from "../dtos/signup.dto";
@@ -58,8 +59,8 @@ export class AuthService {
     return authenticatedUser;
   }
 
-  async forgotPassword(email: string): Promise<void> {
-    const user = await this.userRepository.findByEmail(email);
+  async forgotPassword(forgotPasswordDto: IForgotPasswordDto): Promise<void> {
+    const user = await this.userRepository.findByEmail(forgotPasswordDto.email);
     if (!user) {
       throw new NotFoundError("User with this not found.");
     }
