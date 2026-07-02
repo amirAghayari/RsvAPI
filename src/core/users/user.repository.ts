@@ -1,4 +1,4 @@
-import { DataSource, EntityManager, UpdateResult } from "typeorm";
+import { DataSource, EntityManager, MoreThan, UpdateResult } from "typeorm";
 import APIFeatures from "../../utils/apiFeatures";
 import { User } from "./user.entity";
 import { ICreateUserDto } from "./dtos/create-user.dto";
@@ -78,7 +78,14 @@ export class UserRepository {
     return user;
   }
 
-  // TODO : password reset token
+  async findPasswordResetToken(
+    passwordResetToken: string,
+    manager?: EntityManager,
+  ): Promise<User | null> {
+    return this.repo(manager).findOne({
+      where: { passwordResetToken, passwordResetExpires: MoreThan(new Date()) },
+    });
+  }
 
   /**************************************************************
    ************* @description AGGREGATE OPERATIONS **************

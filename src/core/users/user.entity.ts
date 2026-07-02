@@ -10,7 +10,8 @@ import {
 import bcrypt, { compare, genSalt } from "bcryptjs";
 import { Reservation } from "../reservations/reservation.entity";
 import { Event } from "../events/event.entity";
-
+import crypto from "node:crypto";
+import ms from "ms";
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn("uuid")
@@ -38,6 +39,12 @@ export class User {
   // store hashed refresh token
   @Column({ type: "text", nullable: true, select: false })
   refreshToken: string | null;
+
+  @Column({ type: "text", nullable: true, select: false })
+  passwordResetToken: string | null;
+
+  @Column({ type: "timestamp", nullable: true, select: false })
+  passwordResetExpires: Date | null;
 
   @Column({
     type: "enum",
@@ -86,5 +93,19 @@ export class User {
   async correctPassword(plainPassword: string): Promise<boolean> {
     if (!this.password) return false;
     return compare(plainPassword, this.password);
+  }
+
+  async createPasswordResetToken() {
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    this.passwordResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    this.passwordResetExpires = new Date(
+      Date.now() + ms(process.env.PASSWORD_RESET_EXPIRES_IN as ms.StringValue),
+    );
+
+    return resetToken;
   }
 }
