@@ -122,6 +122,17 @@ router.post("/refresh-token", authController.refreshToken.bind(authController));
  ************************************************************************/
 router.use(protect);
 
+// TODO : add schema
+router.post(
+  "/forgot-password",
+  authController.forgotPassword.bind(authController),
+);
+
+router.patch(
+  "/reset-password",
+  authController.resetPassword.bind(authController),
+);
+
 router
   .route("/me")
   .get(userController.getCurrentUser.bind(userController))
