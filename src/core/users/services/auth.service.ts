@@ -1,9 +1,15 @@
 import { DuplicateError } from "../../../errors/duplicate-error";
+import { InternalServerError } from "../../../errors/internal-server-error";
 import { NotAuthorizedError } from "../../../errors/not-authorized-error";
+import { NotFoundError } from "../../../errors/not-found-error";
+import { sendEmail } from "../../../utils/email";
 import { verifyRefreshToken } from "../../../utils/jwt";
 import { ILoginDto } from "../dtos/login.dto";
+import { IResetPasswordDto } from "../dtos/reset.password.dto";
 import { ISignupDto } from "../dtos/signup.dto";
+import { User } from "../user.entity";
 import { UserRepository } from "../user.repository";
+import crypto from "crypto";
 
 export class AuthService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -52,19 +58,41 @@ export class AuthService {
     return authenticatedUser;
   }
 
-  // TODO : forgot password
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new NotFoundError("User with this not found.");
+    }
+    // create a password reset token
+    const resetToken = user.createPasswordResetToken();
+    await this.userRepository.saveUser(user);
 
-  /**
-   * Refresh access token using refresh token
-   * @param refreshToken - Refresh token from cookie or body
-   * @returns New access token and refresh token
-   */
+    // send email with the password reset token
+    let url = `http://localhost:3000/reset-password/${resetToken}`;
+    if (process.env.NODE_ENV === "production") {
+      url = `https://${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    }
+
+    try {
+      await sendEmail(user.email, url, "درخواست برای ریست کردن رمز عبور");
+    } catch (err) {
+      user.passwordResetToken = null;
+      user.passwordResetExpires = null;
+
+      await this.userRepository.saveUser(user);
+
+      throw new InternalServerError(
+        "There was an error sending the email. Please try again later.",
+      );
+    }
+  }
 
   async refreshToken(refreshToken: string) {
     if (!refreshToken) {
       throw new NotAuthorizedError("Refresh token not provided");
     }
 
+    // Verify refresh token
     const decoded = await verifyRefreshToken(refreshToken);
 
     const user = await this.userRepository.findById(decoded.userId);
@@ -78,5 +106,24 @@ export class AuthService {
    ************* @description PATCH HANDLERS ******************
    ************************************************************/
 
-  //  TODO : reset password
+  async resetPassword(
+    resetPasswordDto: IResetPasswordDto,
+    resetToken: string,
+  ): Promise<User> {
+    // check if the reset token is valid, if not, throw an error
+    const token = crypto.createHash("sha256").update(resetToken).digest("hex");
+    const user = await this.userRepository.findPasswordResetToken(token);
+    if (!user) {
+      throw new NotAuthorizedError("The token is invalid or expired!");
+    }
+
+    // update the user password and reset the password reset token
+    user.password = resetPasswordDto.password;
+    user.passwordConfirmation = resetPasswordDto.passwordConfirmation;
+    user.passwordResetToken = null;
+    user.passwordResetExpires = null;
+    const updatedUser = await this.userRepository.saveUser(user);
+
+    return updatedUser;
+  }
 }

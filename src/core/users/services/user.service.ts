@@ -164,7 +164,6 @@ export class UserService {
         "New password and confirm password do not match",
       );
     }
-    // TODO : check update password security
     targetUser.password = updateCurrentUserPasswordDto.password;
     targetUser.passwordConfirmation =
       updateCurrentUserPasswordDto.passwordConfirmation;
