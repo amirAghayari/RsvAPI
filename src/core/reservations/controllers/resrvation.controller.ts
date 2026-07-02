@@ -9,7 +9,7 @@ export class ReservationController {
    ************* @description GET HANDLERS *************
    ******************************************************/
 
-  async getAllReservation(req: Request, res: Response) {
+  async getAllReservations(req: Request, res: Response) {
     const { pagination, reservations } =
       await this.reservationService.getAllReservations(req.query);
 
@@ -47,21 +47,9 @@ export class ReservationController {
     });
   }
 
-  async getReservationByUserId(req: Request, res: Response) {
-    const userId = req.user.id || req.params.id;
-
-    const reservation =
-      await this.reservationService.getReservationByUserId(userId);
-
-    res.status(200).json({
-      status: "success",
-      data: { reservation },
-    });
-  }
-
-  async getReservationByTicketId(req: Request, res: Response) {
+  async getMyReservations(req: Request, res: Response) {
     const reservation = await this.reservationService.getReservationByUserId(
-      req.params.id,
+      req.user.id,
     );
 
     res.status(200).json({
@@ -69,42 +57,13 @@ export class ReservationController {
       data: { reservation },
     });
   }
-
-  async getReservationByUserAndTicketId(req: Request, res: Response) {
-    const { userId, ticketId } = req.params;
-
-    const reservation =
-      await this.reservationService.getReservationByUserAndTicketId(
-        userId,
-        ticketId,
-      );
-
-    res.status(200).json({
-      status: "success",
-      data: { reservation },
-    });
-  }
-
-  async reservationExists(req: Request, res: Response) {
-    const { userId, ticketId } = req.params;
-    const exists = await this.reservationService.reservationIsExists(
-      userId,
-      ticketId,
-    );
-
-    res.status(200).json({
-      status: "success",
-      exists: exists,
-    });
-  }
-
   /*************************************************************
    ************* @description CREATE OPERATIONS ****************
    *************************************************************/
 
   async createReservation(req: Request, res: Response) {
     const reservation = await this.reservationService.createReservation(
-      req.user.id || req.body.userId,
+      req.user.id,
       req.body.ticketId,
       req.body.quantity,
     );
@@ -135,7 +94,7 @@ export class ReservationController {
   async cancelReservation(req: Request, res: Response) {
     const reservation = await this.reservationService.cancelReservation(
       req.params.id,
-      req.body.userId,
+      req.user.id,
     );
 
     res.status(200).json({

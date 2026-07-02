@@ -9,7 +9,6 @@ export class TicketController {
   /******************************************************
    ************* @description GET HANDLERS **************
    ******************************************************/
-
   async findAllTickets(req: Request, res: Response) {
     const { pagination, tickets } = await this.ticketService.getAllTickets(
       req.query,

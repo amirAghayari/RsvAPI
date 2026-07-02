@@ -10,10 +10,16 @@ import { EventController } from "./events/controllers/event.controller";
 import { CloudinaryService } from "./cloudinary/services/cloudinary.service";
 import { TicketService } from "./tickets/services/ticket.service";
 import { TicketRepository } from "./tickets/ticket.repository";
+import { TicketController } from "./tickets/controllers/ticket.controller";
+
+import { ReservationService } from "./reservations/services/reservation.service";
+import { ReservationRepository } from "./reservations/reservation.repository";
+import { ReservationController } from "./reservations/controllers/resrvation.controller";
 
 export const userRepository = new UserRepository(AppDataSource);
 export const eventRepository = new EventRepository(AppDataSource);
 export const ticketRepository = new TicketRepository(AppDataSource);
+export const reservationRepository = new ReservationRepository(AppDataSource);
 
 export const cloudinaryService = new CloudinaryService();
 export const userService = new UserService(userRepository, cloudinaryService);
@@ -24,7 +30,18 @@ export const ticketService = new TicketService(
   eventRepository,
 );
 export const eventService = new EventService(eventRepository, ticketRepository);
+export const reservationService = new ReservationService(
+  reservationRepository,
+  userRepository,
+  eventRepository,
+  ticketRepository,
+  AppDataSource,
+);
 
 export const userController = new UserController(userService);
 export const authController = new AuthController(authService);
 export const eventController = new EventController(eventService);
+export const reservationController = new ReservationController(
+  reservationService,
+);
+export const ticketController = new TicketController(ticketService);
