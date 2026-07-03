@@ -6,10 +6,12 @@ import {
   JoinColumn,
   CreateDateColumn,
   Index,
+  OneToMany,
 } from "typeorm";
 import { ReservationStatus } from "../../utils/reservation.status";
 import { User } from "../users/user.entity";
 import { Ticket } from "../tickets/ticket.entity";
+import { Payment } from "../payments/payment.entity";
 
 @Index(["userId", "ticketId"], { unique: true })
 @Entity("reservations")
@@ -44,6 +46,9 @@ export class Reservation {
 
   @Column("uuid")
   ticketId: string;
+
+  @OneToMany(() => Payment, (payment) => payment.reservation)
+  payments: Payment[];
 
   @Column({
     type: "integer",

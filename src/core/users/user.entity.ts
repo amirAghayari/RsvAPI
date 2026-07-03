@@ -12,6 +12,7 @@ import { Reservation } from "../reservations/reservation.entity";
 import { Event } from "../events/event.entity";
 import crypto from "node:crypto";
 import ms from "ms";
+import { Payment } from "../payments/payment.entity";
 @Entity("users")
 export class User {
   @PrimaryGeneratedColumn("uuid")
@@ -61,6 +62,9 @@ export class User {
 
   @OneToMany(() => Event, (event) => event.user)
   event: Event[];
+
+  @OneToMany(() => Payment, (payment) => payment.user)
+  payments: Payment[];
 
   @BeforeInsert()
   @BeforeUpdate()
