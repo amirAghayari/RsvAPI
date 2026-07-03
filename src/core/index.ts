@@ -14,7 +14,7 @@ import { TicketController } from "./tickets/controllers/ticket.controller";
 
 import { ReservationService } from "./reservations/services/reservation.service";
 import { ReservationRepository } from "./reservations/reservation.repository";
-import { ReservationController } from "./reservations/controllers/resrvation.controller";
+import { ReservationController } from "./reservations/controllers/reservation.controller";
 
 export const userRepository = new UserRepository(AppDataSource);
 export const eventRepository = new EventRepository(AppDataSource);
