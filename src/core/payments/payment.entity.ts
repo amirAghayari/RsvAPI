@@ -37,7 +37,7 @@ export class Payment {
   user: User;
 
   @Column({
-    type: "bigint",
+    // type: "",
   })
   amount: number;
 
