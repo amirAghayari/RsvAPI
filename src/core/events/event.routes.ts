@@ -5,7 +5,7 @@ import { isAdmin } from "../../middlewares/admin.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 
 import { createEventSchema } from "../../schemas/events-schema/createEven.schema";
-import { updateEventSchema } from "../../schemas/events-schema/updateEventByAdmin.schema";
+import { updateEventSchema } from "../../schemas/events-schema/updateEvent.schema";
 
 import { createTicketSchema } from "../../schemas/tickets-schema/createTicket.schema";
 

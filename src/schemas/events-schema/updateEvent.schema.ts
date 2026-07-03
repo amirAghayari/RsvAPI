@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { EventStatus } from "../../utils/event.status";
 
-export const updateEventSchema = z
+const updateEventBodySchema = z
   .object({
     title: z
       .string()
@@ -64,3 +64,10 @@ export const updateEventSchema = z
       path: ["startsAt"],
     },
   );
+
+export const updateEventSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: updateEventBodySchema,
+});

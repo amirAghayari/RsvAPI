@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const updateTicketSchema = z
+export const updateTicketBodySchema = z
   .object({
     title: z
       .string()
@@ -57,3 +57,10 @@ export const updateTicketSchema = z
       path: ["salesStartAt"], // error will be attached to salesStartAt
     },
   );
+
+export const updateTicketSchema = z.object({
+  params: z.object({
+    id: z.string(),
+  }),
+  body: updateTicketBodySchema,
+});
