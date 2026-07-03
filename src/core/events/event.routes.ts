@@ -8,6 +8,7 @@ import { createEventByAdminSchema } from "../../schemas/events-schema/createEven
 import { updateEventByAdminSchema } from "../../schemas/events-schema/updateEventByAdmin.schema";
 import { deleteEventByAdminSchema } from "../../schemas/events-schema/deleteEventByAdmin.schema";
 import { getEventByIdSchema } from "../../schemas/events-schema/getEventById.schema";
+import { createTicketSchema } from "../../schemas/tickets-schema/createTicket.schema";
 
 const router = express.Router();
 
@@ -42,10 +43,10 @@ router.post(
 );
 
 // Create ticket for an event
-router.post(
-  "/:eventId/tickets",
+router.post("/:eventId/tickets", [
+  validate(createTicketSchema),
   ticketController.createTicket.bind(ticketController),
-);
+]);
 
 router.patch(
   "/:id",
