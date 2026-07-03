@@ -11,6 +11,8 @@ import { createUserByAdminSchema } from "../../schemas/users-schema/createUserBy
 import { updateUserByAdminSchema } from "../../schemas/users-schema/updateUserByAdmin.schema";
 import { loginSchema } from "../../schemas/users-schema/login.schema";
 import { upload } from "../../middlewares/upload.middleware";
+import { forgotPasswordSchema } from "../../schemas/users-schema/forgotPassword.schema";
+import { resetPasswordSchema } from "../../schemas/users-schema/resetPassword.schema";
 
 const router = express.Router();
 /**
@@ -122,16 +124,15 @@ router.post("/refresh-token", authController.refreshToken.bind(authController));
  ************************************************************************/
 router.use(protect);
 
-// TODO : add schema
-router.post(
-  "/forgot-password",
+router.post("/forgot-password", [
+  validate(forgotPasswordSchema),
   authController.forgotPassword.bind(authController),
-);
+]);
 
-router.patch(
-  "/reset-password",
+router.patch("/reset-password", [
+  validate(resetPasswordSchema),
   authController.resetPassword.bind(authController),
-);
+]);
 
 router
   .route("/me")
