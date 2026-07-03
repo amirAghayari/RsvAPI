@@ -4,10 +4,9 @@ import { protect } from "../../middlewares/auth.middleware";
 import { isAdmin } from "../../middlewares/admin.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 
-import { createEventByAdminSchema } from "../../schemas/events-schema/createEventByAdmin.schema";
-import { updateEventByAdminSchema } from "../../schemas/events-schema/updateEventByAdmin.schema";
-import { deleteEventByAdminSchema } from "../../schemas/events-schema/deleteEventByAdmin.schema";
-import { getEventByIdSchema } from "../../schemas/events-schema/getEventById.schema";
+import { createEventSchema } from "../../schemas/events-schema/createEven.schema";
+import { updateEventSchema } from "../../schemas/events-schema/updateEventByAdmin.schema";
+
 import { createTicketSchema } from "../../schemas/tickets-schema/createTicket.schema";
 
 const router = express.Router();
@@ -18,11 +17,7 @@ const router = express.Router();
 
 router.get("/", eventController.findAllEvents.bind(eventController));
 
-router.get(
-  "/:id",
-  validate(getEventByIdSchema),
-  eventController.findEventById.bind(eventController),
-);
+router.get("/:id", eventController.findEventById.bind(eventController));
 
 // Get tickets of an event
 router.get(
@@ -38,26 +33,23 @@ router.use(protect, isAdmin);
 
 router.post(
   "/",
-  validate(createEventByAdminSchema),
+  validate(createEventSchema),
   eventController.createEvent.bind(eventController),
 );
 
 // Create ticket for an event
-router.post("/:eventId/tickets", [
+router.post(
+  "/:eventId/tickets",
   validate(createTicketSchema),
   ticketController.createTicket.bind(ticketController),
-]);
+);
 
 router.patch(
   "/:id",
-  validate(updateEventByAdminSchema),
+  validate(updateEventSchema),
   eventController.updateEvent.bind(eventController),
 );
 
-router.delete(
-  "/:id",
-  validate(deleteEventByAdminSchema),
-  eventController.deleteEvent.bind(eventController),
-);
+router.delete("/:id", eventController.deleteEvent.bind(eventController));
 
 export { router as eventRouter };

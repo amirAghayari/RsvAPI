@@ -23,10 +23,11 @@ router.use(protect, isAdmin);
 // Get all tickets (Admin Dashboard)
 router.get("/", ticketController.findAllTickets.bind(ticketController));
 
-router.patch("/:id", [
+router.patch(
+  "/:id",
   validate(updateTicketSchema),
   ticketController.updateTicket.bind(ticketController),
-]);
+);
 
 router.delete("/:id", ticketController.deleteTicket.bind(ticketController));
 

@@ -1,28 +1,66 @@
-import z from "zod";
+import { z } from "zod";
+import { EventStatus } from "../../utils/event.status";
 
-// TODO
-
-export const updateEventByAdminSchema = z.object({
-  body: z.object({
-    userId: z.string().min(1, "User ID is required"),
-    // TODO : look this
-    status: z.string(
-      "status must be draft , published , canceled , finished or sold_out",
-    ),
+export const updateEventSchema = z
+  .object({
     title: z
       .string()
-      .min(4, "Event title required ")
-      .max(50, "The title cannot be longer than 50 characters."),
-    price: z
-      .number("The price of a numeric field is")
-      .min(1, "The price is required"),
-    location: z.string().min(4, "Event location required "),
-    capacity: z.number("The capacity of a numeric field is").min(5),
-    executionDate: z.date(),
-    salesStartTime: z.date(),
-    salesEndTime: z.date(),
-  }),
-  params: z.object({
-    id: z.string().min(1, "Event ID is required"),
-  }),
-});
+      .min(3, "Title must be at least 3 characters")
+      .max(100, "Title cannot exceed 100 characters")
+      .optional(),
+
+    description: z
+      .string()
+      .max(2000, "Description cannot exceed 2000 characters")
+      .optional(),
+
+    location: z
+      .string()
+      .min(2, "Location must be at least 2 characters")
+      .max(200, "Location cannot exceed 200 characters")
+      .optional(),
+
+    startsAt: z.coerce
+      .date()
+      .refine((d) => !isNaN(d.getTime()), "Invalid start date")
+      .optional(),
+
+    endsAt: z.coerce
+      .date()
+      .refine((d) => !isNaN(d.getTime()), "Invalid end date")
+      .optional(),
+
+    status: z
+      .nativeEnum(EventStatus, {
+        error: () => ({ message: "Invalid event status value" }),
+      })
+      .optional(),
+  })
+  .strict() // Reject extra fields
+  .refine(
+    (data) => {
+      // If both dates are provided, ensure startsAt < endsAt
+      if (data.startsAt && data.endsAt) {
+        return data.startsAt < data.endsAt;
+      }
+      return true;
+    },
+    {
+      message: "startsAt must be before endsAt",
+      path: ["startsAt"],
+    },
+  )
+  .refine(
+    (data) => {
+      // Optional: if startsAt is provided, ensure it's in the future
+      // (remove if you allow past dates on update)
+      if (data.startsAt) {
+        return data.startsAt > new Date();
+      }
+      return true;
+    },
+    {
+      message: "Event start date must be in the future",
+      path: ["startsAt"],
+    },
+  );
