@@ -2,6 +2,8 @@ import express from "express";
 import { reservationController } from "..";
 import { protect } from "../../middlewares/auth.middleware";
 import { isAdmin } from "../../middlewares/admin.middleware";
+import { validate } from "../../middlewares/validate.middleware";
+import { createReservationSchema } from "../../schemas/reservations-schema/createReservation.schema";
 
 const router = express.Router();
 
@@ -13,6 +15,7 @@ router.use(protect);
 
 router.post(
   "/",
+  validate(createReservationSchema),
   reservationController.createReservation.bind(reservationController),
 );
 
