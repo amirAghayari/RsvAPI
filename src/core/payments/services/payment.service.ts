@@ -64,15 +64,13 @@ export class PaymentService {
     return await this.paymentRepository.findByUserId(userId);
   }
 
-  /******************************************************
-   ************* CREATE PAYMENT *************************
-   ******************************************************/
-
+  //create payment
   async createPayment(
     userId: string,
     dto: ICreatePaymentDto,
   ): Promise<{ paymentUrl: string }> {
     return this.dataSource.transaction(async (manager) => {
+      // validate and lock reservation
       const reservation =
         await this.reservationService.validateReservationForPayment(
           dto.reservationId,
@@ -80,6 +78,7 @@ export class PaymentService {
           manager,
         );
 
+      // check reservation exists
       const exists = await this.paymentRepository.existsPaymentByReservation(
         reservation.id,
         manager,
@@ -126,12 +125,10 @@ export class PaymentService {
     });
   }
 
-  /******************************************************
-   ************* VERIFY PAYMENT *************************
-   ******************************************************/
-
+  // verify payment
   async verifyPayment(authority: string, status: string): Promise<Payment> {
     return this.dataSource.transaction(async (manager) => {
+      // check status  === ok
       if (status !== "OK") {
         throw new BadRequestError("Payment was canceled by user.");
       }
@@ -150,6 +147,7 @@ export class PaymentService {
         return payment;
       }
 
+      // verify payment by zarinpal
       const verify = await this.zarinpalService.verifyPayment({
         authority,
         amount: payment.amount,
@@ -172,6 +170,7 @@ export class PaymentService {
 
       await this.paymentRepository.savePayment(payment, manager);
 
+      // lock reservation
       const reservation = await this.reservationRepository.findByIdForUpdate(
         payment.reservationId,
         manager,
@@ -181,6 +180,7 @@ export class PaymentService {
         throw new NotFoundError("Reservation not found.");
       }
 
+      // update reservation
       reservation.status = ReservationStatus.PAID;
 
       await this.reservationRepository.saveReservation(reservation, manager);
