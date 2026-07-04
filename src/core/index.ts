@@ -15,16 +15,19 @@ import { TicketController } from "./tickets/controllers/ticket.controller";
 import { ReservationService } from "./reservations/services/reservation.service";
 import { ReservationRepository } from "./reservations/reservation.repository";
 import { ReservationController } from "./reservations/controllers/reservation.controller";
+import { PaymentRepository } from "./payments/payment.repository";
+import { PaymentService } from "./payments/services/payment.service";
+import { PaymentController } from "./payments/controllers/payment.controller";
 
 export const userRepository = new UserRepository(AppDataSource);
 export const eventRepository = new EventRepository(AppDataSource);
 export const ticketRepository = new TicketRepository(AppDataSource);
 export const reservationRepository = new ReservationRepository(AppDataSource);
+export const paymentRepository = new PaymentRepository(AppDataSource);
 
 export const cloudinaryService = new CloudinaryService();
 export const userService = new UserService(userRepository, cloudinaryService);
 export const authService = new AuthService(userRepository);
-
 export const ticketService = new TicketService(
   ticketRepository,
   eventRepository,
@@ -37,6 +40,13 @@ export const reservationService = new ReservationService(
   ticketRepository,
   AppDataSource,
 );
+export const paymentService = new PaymentService(
+  paymentRepository,
+  reservationRepository,
+  ticketRepository,
+  userRepository,
+  AppDataSource,
+);
 
 export const userController = new UserController(userService);
 export const authController = new AuthController(authService);
@@ -45,3 +55,4 @@ export const reservationController = new ReservationController(
   reservationService,
 );
 export const ticketController = new TicketController(ticketService);
+export const paymentController = new PaymentController(paymentService);

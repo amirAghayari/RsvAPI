@@ -146,8 +146,12 @@ export class PaymentService {
    ************* VERIFY PAYMENT *************************
    ******************************************************/
 
-  async verifyPayment(authority: string): Promise<Payment> {
+  async verifyPayment(authority: string, status: string): Promise<Payment> {
     return this.dataSource.transaction(async (manager) => {
+      if (status !== "OK") {
+        throw new BadRequestError("Payment was canceled by user.");
+      }
+
       const payment = await this.paymentRepository.findByAuthority(
         authority,
         undefined,
