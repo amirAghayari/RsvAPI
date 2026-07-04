@@ -18,6 +18,7 @@ import { ReservationController } from "./reservations/controllers/reservation.co
 import { PaymentRepository } from "./payments/payment.repository";
 import { PaymentService } from "./payments/services/payment.service";
 import { PaymentController } from "./payments/controllers/payment.controller";
+import { ZarinpalService } from "./integrations/zarinpal/services/zarinpal.service";
 
 export const userRepository = new UserRepository(AppDataSource);
 export const eventRepository = new EventRepository(AppDataSource);
@@ -40,12 +41,14 @@ export const reservationService = new ReservationService(
   ticketRepository,
   AppDataSource,
 );
+export const zarinpalService = new ZarinpalService();
 export const paymentService = new PaymentService(
   paymentRepository,
   reservationRepository,
   ticketRepository,
   userRepository,
   AppDataSource,
+  zarinpalService,
 );
 
 export const userController = new UserController(userService);

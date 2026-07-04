@@ -1,4 +1,4 @@
-import { DataSource } from "typeorm";
+import { DataSource, EntityManager } from "typeorm";
 import { NotFoundError } from "../../../errors/not-found-error";
 import { UserRepository } from "../../users/user.repository";
 
@@ -171,6 +171,64 @@ export class ReservationService {
     return exists;
   }
 
+  async validateReservationForPayment(
+    reservationId: string,
+    userId: string,
+    manager?: EntityManager,
+  ): Promise<Reservation> {
+    const reservation = manager
+      ? await this.reservationRepository.findByIdForUpdate(
+          reservationId,
+          manager,
+        )
+      : await this.reservationRepository.findById(reservationId, {
+          relations: ["ticket"],
+        });
+
+    if (!reservation) {
+      throw new NotFoundError(
+        `Reservation with id ${reservationId} not found.`,
+      );
+    }
+
+    /******************************************************
+     ******************** OWNERSHIP ***********************
+     ******************************************************/
+
+    if (reservation.userId !== userId) {
+      throw new BadRequestError(
+        "You are not allowed to pay for this reservation.",
+      );
+    }
+
+    /******************************************************
+     ********************* STATUS *************************
+     ******************************************************/
+
+    switch (reservation.status) {
+      case ReservationStatus.CONFIRMED:
+        throw new BadRequestError("Reservation has already been paid.");
+
+      case ReservationStatus.CANCELED:
+        throw new BadRequestError("Reservation has been canceled.");
+
+      case ReservationStatus.EXPIRED:
+        throw new BadRequestError("Reservation has expired.");
+    }
+
+    /******************************************************
+     ******************** EXPIRE TIME *********************
+     ******************************************************/
+
+    if (reservation.expiresAt && reservation.expiresAt < new Date()) {
+      throw new BadRequestError(
+        "Reservation has expired. Please reserve again.",
+      );
+    }
+
+    return reservation;
+  }
+
   /******************************************************
    ************* @description POST HANDLERS *************
    ******************************************************/
@@ -220,6 +278,13 @@ export class ReservationService {
 
       if (!event) {
         throw new NotFoundError("Event not found.");
+      }
+
+      if (
+        event.status === EventStatus.CANCELED ||
+        event.status === EventStatus.FINISHED
+      ) {
+        throw new BadRequestError("Event is not available.");
       }
 
       /******************************************************
@@ -307,70 +372,6 @@ export class ReservationService {
   /******************************************************
    ************* @description Patch HANDLERS *************
    ******************************************************/
-  async confirmReservationPayment(reservationId: string): Promise<Reservation> {
-    return await this.dataSource.transaction(async (manager) => {
-      /******************************************************
-       **************** LOCK RESERVATION *********************
-       ******************************************************/
-
-      const reservation = await this.reservationRepository.findByIdForUpdate(
-        reservationId,
-        manager,
-      );
-
-      if (!reservation) {
-        throw new NotFoundError(
-          `Reservation with id ${reservationId} not found.`,
-        );
-      }
-
-      /******************************************************
-       ******************** VALIDATION ***********************
-       ******************************************************/
-
-      if (reservation.status === ReservationStatus.CONFIRMED) {
-        throw new BadRequestError("Reservation already confirmed.");
-      }
-
-      if (reservation.status === ReservationStatus.CANCELED) {
-        throw new BadRequestError("Reservation has been canceled.");
-      }
-
-      if (reservation.status === ReservationStatus.EXPIRED) {
-        throw new BadRequestError("Reservation has expired.");
-      }
-
-      if (reservation.expiresAt < new Date()) {
-        throw new BadRequestError("Reservation has expired.");
-      }
-
-      /******************************************************
-       ******************** LOCK TICKET **********************
-       ******************************************************/
-
-      const ticket = await this.ticketRepository.findByIdForUpdate(
-        reservation.ticketId,
-        manager,
-      );
-
-      if (!ticket) {
-        throw new NotFoundError(
-          `Ticket with id ${reservation.ticketId} not found.`,
-        );
-      }
-
-      /******************************************************
-       **************** UPDATE RESERVATION *******************
-       ******************************************************/
-
-      reservation.status = ReservationStatus.CONFIRMED;
-      reservation.paidAt = new Date();
-
-      await this.reservationRepository.saveReservation(reservation, manager);
-
-      return reservation;
-    });
-  }
 
   async cancelReservation(
     reservationId: string,
@@ -528,6 +529,7 @@ export class ReservationService {
       await this.expireReservation(reservation.id);
     }
   }
+
   /******************************************************
    ************* @description DELETE HANDLERS *************
    ******************************************************/

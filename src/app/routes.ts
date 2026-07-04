@@ -9,6 +9,9 @@ import { errorHandler } from "../middlewares/error-handler";
 import { userRouter } from "../core/users/user.routes";
 import { eventRouter } from "../core/events/event.routes";
 import swaggerSpec from "./../config/swagger";
+import { reservationRouter } from "../core/reservations/reservation.routes";
+import { ticketRouter } from "../core/tickets/ticket.routes";
+import { paymentRouter } from "../core/payments/payment.routes";
 
 const routes = (app: Express) => {
   const loginLimiter = rateLimit({
@@ -31,10 +34,9 @@ const routes = (app: Express) => {
 
   app.use("/api/V1/users", userRouter);
   app.use("/api/V1/events", eventRouter);
-  // app.use("/api/V1/reservations", ReservationRouter);
-  // app.use("/api/V1/events", EventRouter);
-  // app.use("/api/V1/logs", LogRouter);
-
+  app.use("api/v1/reservations", reservationRouter);
+  app.use("api/v1/tickets", ticketRouter);
+  app.use("api/v1/payments", paymentRouter);
   //  Not found routed
   app.all("/*splat", () => {
     throw new NotFoundError("The requested page was not found.");

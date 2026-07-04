@@ -13,15 +13,18 @@ import { PaymentStatus } from "../../../utils/payment.status";
 import { ReservationStatus } from "../../../utils/reservation.status";
 
 import { ICreatePaymentDto } from "../dtos/create-payment.dto";
+import { ZarinpalService } from "../../integrations/zarinpal/services/zarinpal.service";
+import { ReservationService } from "../../reservations/services/reservation.service";
 
 export class PaymentService {
   constructor(
     private readonly paymentRepository: PaymentRepository,
     private readonly reservationRepository: ReservationRepository,
+    private readonly reservationService: ReservationService,
     private readonly ticketRepository: TicketRepository,
     private readonly userRepository: UserRepository,
     private readonly dataSource: DataSource,
-    // private readonly zarinpalService: ZarinpalService,
+    private readonly zarinpalService: ZarinpalService,
   ) {}
 
   /******************************************************
@@ -70,30 +73,12 @@ export class PaymentService {
     dto: ICreatePaymentDto,
   ): Promise<{ paymentUrl: string }> {
     return this.dataSource.transaction(async (manager) => {
-      const reservation = await this.reservationRepository.findByIdForUpdate(
-        dto.reservationId,
-        manager,
-      );
-
-      if (!reservation) {
-        throw new NotFoundError("Reservation not found.");
-      }
-
-      if (reservation.userId !== userId) {
-        throw new BadRequestError("Access denied.");
-      }
-
-      if (reservation.status === ReservationStatus.PAID) {
-        throw new BadRequestError("Reservation already paid.");
-      }
-
-      if (reservation.status === ReservationStatus.CANCELED) {
-        throw new BadRequestError("Reservation canceled.");
-      }
-
-      if (reservation.status === ReservationStatus.EXPIRED) {
-        throw new BadRequestError("Reservation expired.");
-      }
+      const reservation =
+        await this.reservationService.validateReservationForPayment(
+          dto.reservationId,
+          userId,
+          manager,
+        );
 
       const exists = await this.paymentRepository.existsPaymentByReservation(
         reservation.id,
@@ -125,7 +110,6 @@ export class PaymentService {
         manager,
       );
 
-      // TODO
       const gateway = await this.zarinpalService.requestPayment({
         amount,
         paymentId: payment.id,

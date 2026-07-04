@@ -63,12 +63,6 @@ export class Reservation {
   })
   expiresAt: Date;
 
-  @Column({
-    type: "timestamp",
-    nullable: true,
-  })
-  paidAt: Date;
-
   @CreateDateColumn()
   createdAt: Date;
 }

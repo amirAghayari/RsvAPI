@@ -66,23 +66,23 @@ export class Payment {
   @Column({
     nullable: true,
   })
-  refId: string;
+  refId: string | undefined;
 
   @Column({
     nullable: true,
   })
-  cardPan: string;
+  cardPan: string | undefined;
 
   @Column({
     nullable: true,
   })
-  feeType: string;
+  feeType: string | undefined;
 
   @Column({
     type: "integer",
     nullable: true,
   })
-  fee: number;
+  fee: number | undefined;
 
   @Column({
     type: "timestamp",
