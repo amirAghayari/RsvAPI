@@ -191,20 +191,14 @@ export class ReservationService {
       );
     }
 
-    /******************************************************
-     ******************** OWNERSHIP ***********************
-     ******************************************************/
-
+    //ownership
     if (reservation.userId !== userId) {
       throw new BadRequestError(
         "You are not allowed to pay for this reservation.",
       );
     }
 
-    /******************************************************
-     ********************* STATUS *************************
-     ******************************************************/
-
+    // check status
     switch (reservation.status) {
       case ReservationStatus.CONFIRMED:
         throw new BadRequestError("Reservation has already been paid.");
@@ -216,10 +210,7 @@ export class ReservationService {
         throw new BadRequestError("Reservation has expired.");
     }
 
-    /******************************************************
-     ******************** EXPIRE TIME *********************
-     ******************************************************/
-
+    //validate expires time
     if (reservation.expiresAt && reservation.expiresAt < new Date()) {
       throw new BadRequestError(
         "Reservation has expired. Please reserve again.",
@@ -239,10 +230,7 @@ export class ReservationService {
     quantity: number,
   ): Promise<Reservation> {
     return await this.dataSource.transaction(async (manager) => {
-      /******************************************************
-       ******************** USER *****************************
-       ******************************************************/
-
+      // Validate user existence
       const user = await this.userRepository.findById(
         userId,
         undefined,
@@ -253,10 +241,7 @@ export class ReservationService {
         throw new NotFoundError(`User with id ${userId} not found.`);
       }
 
-      /******************************************************
-       ******************* TICKET ****************************
-       ******************************************************/
-
+      // Lock ticket for update
       const ticket = await this.ticketRepository.findByIdForUpdate(
         ticketId,
         manager,
@@ -266,10 +251,7 @@ export class ReservationService {
         throw new NotFoundError(`Ticket with id ${ticketId} not found.`);
       }
 
-      /******************************************************
-       ******************** EVENT ****************************
-       ******************************************************/
-
+      // Validate event availability
       const event = await this.eventRepository.findById(
         ticket.eventId,
         undefined,
@@ -287,10 +269,6 @@ export class ReservationService {
         throw new BadRequestError("Event is not available.");
       }
 
-      /******************************************************
-       ******************** VALIDATION ***********************
-       ******************************************************/
-
       if (event.status !== EventStatus.PUBLISHED) {
         throw new BadRequestError(
           "This event is not available for reservation.",
@@ -298,7 +276,7 @@ export class ReservationService {
       }
 
       const now = new Date();
-
+      // Validate reservation request
       if (ticket.saleStartsAt > now) {
         throw new BadRequestError("Ticket sale has not started yet.");
       }
@@ -323,10 +301,7 @@ export class ReservationService {
         throw new BadRequestError("Not enough ticket capacity available.");
       }
 
-      /******************************************************
-       ************ DUPLICATE RESERVATION ********************
-       ******************************************************/
-
+      // Prevent duplicate pending reservation
       const activeReservation =
         await this.reservationRepository.findPendingReservation(
           userId,
@@ -340,18 +315,12 @@ export class ReservationService {
         );
       }
 
-      /******************************************************
-       **************** UPDATE TICKET ************************
-       ******************************************************/
-
+      // Reserve ticket capacity
       ticket.reservedCount += quantity;
 
       await this.ticketRepository.saveTicket(ticket, manager);
 
-      /******************************************************
-       *************** CREATE RESERVATION ********************
-       ******************************************************/
-
+      // Create pending reservation
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
       const reservation = await this.reservationRepository.createReservation(
@@ -378,10 +347,7 @@ export class ReservationService {
     userId: string,
   ): Promise<Reservation> {
     return await this.dataSource.transaction(async (manager) => {
-      /******************************************************
-       **************** LOCK RESERVATION *********************
-       ******************************************************/
-
+      // Lock reservation for update
       const reservation = await this.reservationRepository.findByIdForUpdate(
         reservationId,
         manager,
@@ -393,20 +359,13 @@ export class ReservationService {
         );
       }
 
-      /******************************************************
-       ******************** OWNERSHIP ***********************
-       ******************************************************/
-
+      // check ownerShip
       if (reservation.userId !== userId) {
         throw new BadRequestError(
           "You are not allowed to cancel this reservation.",
         );
       }
-
-      /******************************************************
-       ******************** VALIDATION **********************
-       ******************************************************/
-
+      // Validate reservation request
       switch (reservation.status) {
         case ReservationStatus.CANCELED:
           throw new BadRequestError("Reservation already canceled.");
@@ -418,10 +377,7 @@ export class ReservationService {
           throw new BadRequestError("Paid reservations cannot be canceled.");
       }
 
-      /******************************************************
-       ********************* TICKET *************************
-       ******************************************************/
-
+      // Lock ticket for update
       const ticket = await this.ticketRepository.findByIdForUpdate(
         reservation.ticketId,
         manager,
@@ -433,10 +389,7 @@ export class ReservationService {
         );
       }
 
-      /******************************************************
-       **************** RELEASE CAPACITY ********************
-       ******************************************************/
-
+      //release ticket capacity
       ticket.reservedCount -= reservation.quantity;
 
       if (ticket.reservedCount < 0) {
@@ -445,10 +398,7 @@ export class ReservationService {
 
       await this.ticketRepository.saveTicket(ticket, manager);
 
-      /******************************************************
-       **************** UPDATE RESERVATION ******************
-       ******************************************************/
-
+      //update reservation
       reservation.status = ReservationStatus.CANCELED;
 
       await this.reservationRepository.saveReservation(reservation, manager);
@@ -459,10 +409,7 @@ export class ReservationService {
 
   async expireReservation(reservationId: string): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      /******************************************************
-       **************** LOCK RESERVATION *********************
-       ******************************************************/
-
+      // Lock reservation for update
       const reservation = await this.reservationRepository.findByIdForUpdate(
         reservationId,
         manager,
@@ -472,10 +419,7 @@ export class ReservationService {
         return;
       }
 
-      /******************************************************
-       ******************* VALIDATION ************************
-       ******************************************************/
-
+      //validate reservation
       if (reservation.status !== ReservationStatus.PENDING) {
         return;
       }
@@ -484,10 +428,7 @@ export class ReservationService {
         return;
       }
 
-      /******************************************************
-       ********************* TICKET **************************
-       ******************************************************/
-
+      // Lock ticket for update
       const ticket = await this.ticketRepository.findByIdForUpdate(
         reservation.ticketId,
         manager,
@@ -499,10 +440,7 @@ export class ReservationService {
         );
       }
 
-      /******************************************************
-       **************** RELEASE CAPACITY *********************
-       ******************************************************/
-
+      //release ticket capacity
       ticket.reservedCount -= reservation.quantity;
 
       if (ticket.reservedCount < 0) {
@@ -511,10 +449,7 @@ export class ReservationService {
 
       await this.ticketRepository.saveTicket(ticket, manager);
 
-      /******************************************************
-       **************** UPDATE RESERVATION *******************
-       ******************************************************/
-
+      //update reservation
       reservation.status = ReservationStatus.EXPIRED;
 
       await this.reservationRepository.saveReservation(reservation, manager);
