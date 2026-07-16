@@ -180,8 +180,8 @@ export class PaymentService {
         throw new NotFoundError("Reservation not found.");
       }
 
-      // update reservation
-      reservation.status = ReservationStatus.PAID;
+      // Confirm the reservation only after the payment gateway succeeds.
+      reservation.status = ReservationStatus.CONFIRMED;
 
       await this.reservationRepository.saveReservation(reservation, manager);
 

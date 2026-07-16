@@ -123,6 +123,7 @@ export class EventService {
 
       switch (currentStatus) {
         case EventStatus.DRAFT:
+          // The organizer can draft or cancel the event, but publishing must be reviewed by admin.
           if (
             ![EventStatus.PUBLISHED, EventStatus.CANCELED].includes(newStatus)
           ) {
@@ -133,11 +134,10 @@ export class EventService {
           break;
 
         case EventStatus.PUBLISHED:
-          if (
-            ![EventStatus.IN_PROGRESS, EventStatus.CANCELED].includes(newStatus)
-          ) {
+          // In-progress and finished should be system-managed based on time, not manually updated.
+          if (![EventStatus.CANCELED].includes(newStatus)) {
             throw new BadRequestError(
-              "From PUBLISHED you can only change to IN_PROGRESS or CANCELED.",
+              "From PUBLISHED you can only change to CANCELED.",
             );
           }
           break;
@@ -164,6 +164,11 @@ export class EventService {
        ******************************************************/
 
       if (newStatus === EventStatus.PUBLISHED) {
+        // Only an admin may approve an event for public sale.
+        if (userRole !== "admin") {
+          throw new ForbiddenError("Only an admin can publish an event.");
+        }
+
         if (targetEvent.startsAt <= now) {
           throw new BadRequestError(
             "Cannot publish an event that has already started.",

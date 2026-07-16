@@ -261,14 +261,17 @@ export class ReservationService {
         throw new NotFoundError("Event not found.");
       }
 
-      // TODO :Check
+      // Progress/finish should be driven by event time, not by reservation count.
+      const now = new Date();
 
-      if (ticket.reservedCount >= 1) {
+      if (event.status === EventStatus.PUBLISHED && event.startsAt <= now) {
         event.status = EventStatus.IN_PROGRESS;
+        await this.eventRepository.saveEvent(event, manager);
       }
 
-      if (ticket.reservedCount == ticket.capacity) {
+      if (event.status === EventStatus.IN_PROGRESS && event.endsAt <= now) {
         event.status = EventStatus.FINISHED;
+        await this.eventRepository.saveEvent(event, manager);
       }
 
       if (
@@ -284,7 +287,6 @@ export class ReservationService {
         );
       }
 
-      const now = new Date();
       // Validate reservation request
       if (ticket.saleStartsAt > now) {
         throw new BadRequestError("Ticket sale has not started yet.");
