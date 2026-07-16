@@ -252,14 +252,23 @@ export class ReservationService {
       }
 
       // Validate event availability
-      const event = await this.eventRepository.findById(
+      const event = await this.eventRepository.findByIdForUpdate(
         ticket.eventId,
-        undefined,
         manager,
       );
 
       if (!event) {
         throw new NotFoundError("Event not found.");
+      }
+
+      // TODO :Check
+
+      if (ticket.reservedCount >= 1) {
+        event.status = EventStatus.IN_PROGRESS;
+      }
+
+      if (ticket.reservedCount == ticket.capacity) {
+        event.status = EventStatus.FINISHED;
       }
 
       if (

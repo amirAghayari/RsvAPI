@@ -55,6 +55,8 @@ export class TicketController {
 
   async createTicket(req: Request, res: Response) {
     const ticket = await this.ticketService.createTicket(
+      req.user.id,
+      req.user.role,
       req.body as ICreateTicketDto,
     );
 
@@ -74,6 +76,8 @@ export class TicketController {
     const updatedTicket = await this.ticketService.updateTicket(
       req.params.id,
       req.body as IUpdateTicketDto,
+      req.user.id,
+      req.user.role,
     );
 
     res.status(200).json({
@@ -89,7 +93,11 @@ export class TicketController {
    ******************************************************/
 
   async deleteTicket(req: Request, res: Response) {
-    await this.ticketService.deleteTicket(req.params.id);
+    await this.ticketService.deleteTicket(
+      req.params.id,
+      req.user.id,
+      req.user.role,
+    );
 
     res.status(204).json({
       status: "success",

@@ -24,8 +24,6 @@ export const createEventSchema = z
     endsAt: z.coerce
       .date()
       .refine((d) => !isNaN(d.getTime()), "Invalid end date"),
-
-    userId: z.string(),
   })
   .strict() // Prevent extra fields
   .refine((data) => data.startsAt < data.endsAt, {

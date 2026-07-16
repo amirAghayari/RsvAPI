@@ -78,18 +78,18 @@ export class ReservationController {
    *************************************************************/
 
   //  TODO : fix payment from zarinpal ,..
-  async confirmReservationPayment(req: Request, res: Response) {
-    const reservation = await this.reservationService.confirmReservationPayment(
-      req.params.id,
-    );
+  // async confirmReservationPayment(req: Request, res: Response) {
+  //   const reservation = await this.reservationService.confirmReservationPayment(
+  //     req.params.id,
+  //   );
 
-    res.status(200).json({
-      status: "success",
-      data: {
-        reservation,
-      },
-    });
-  }
+  //   res.status(200).json({
+  //     status: "success",
+  //     data: {
+  //       reservation,
+  //     },
+  //   });
+  // }
 
   async cancelReservation(req: Request, res: Response) {
     const reservation = await this.reservationService.cancelReservation(

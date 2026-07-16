@@ -1,4 +1,5 @@
 import { BadRequestError } from "../../../errors/bad-request-error";
+import { ForbiddenError } from "../../../errors/forbidden-error";
 import { NotFoundError } from "../../../errors/not-found-error";
 import { EventRepository } from "../../events/event.repository";
 import { Ticket } from "../ticket.entity";
@@ -68,7 +69,11 @@ export class TicketService {
    ************* @description POST HANDLERS **************
    ******************************************************/
 
-  async createTicket(createTicketDto: ICreateTicketDto): Promise<Ticket> {
+  async createTicket(
+    userId: string,
+    userRole: string,
+    createTicketDto: ICreateTicketDto,
+  ): Promise<Ticket> {
     const targetEvent = await this.eventRepository.findById(
       createTicketDto.eventId,
     );
@@ -76,6 +81,13 @@ export class TicketService {
     if (!targetEvent) {
       throw new NotFoundError(
         `Event with this id:${createTicketDto.eventId} not found. `,
+      );
+    }
+
+    // Only the event owner or admin can create tickets for that event.
+    if (userRole !== "admin" && targetEvent.userId !== userId) {
+      throw new ForbiddenError(
+        "You are not allowed to create tickets for this event.",
       );
     }
 
@@ -116,11 +128,28 @@ export class TicketService {
   async updateTicket(
     ticketId: string,
     updateTicketDto: IUpdateTicketDto,
+    userId?: string,
+    userRole?: string,
   ): Promise<Ticket | null> {
     const targetTicket = await this.ticketRepository.findById(ticketId);
 
     if (!targetTicket) {
       throw new NotFoundError(`Ticket with this id:${ticketId} not found. `);
+    }
+
+    const targetEvent = await this.eventRepository.findById(
+      targetTicket.eventId,
+    );
+
+    if (!targetEvent) {
+      throw new NotFoundError(
+        `Event with this id:${targetTicket.eventId} not found. `,
+      );
+    }
+
+    // Protect ticket mutation from unauthorized users.
+    if (userRole !== "admin" && targetEvent.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to update this ticket.");
     }
 
     if (updateTicketDto.price !== undefined && updateTicketDto.price < 0) {
@@ -161,13 +190,32 @@ export class TicketService {
    ************* @description DELETE HANDLERS ************
    ******************************************************/
 
-  async deleteTicket(ticketId: string): Promise<void> {
+  async deleteTicket(
+    ticketId: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<void> {
     const targetTicket = await this.ticketRepository.findById(ticketId, {
       relations: ["reservations"],
     });
 
     if (!targetTicket) {
       throw new NotFoundError(`Ticket with this id:${ticketId} not found. `);
+    }
+
+    const targetEvent = await this.eventRepository.findById(
+      targetTicket.eventId,
+    );
+
+    if (!targetEvent) {
+      throw new NotFoundError(
+        `Event with this id:${targetTicket.eventId} not found. `,
+      );
+    }
+
+    // You cannot delete a ticket that another organizer owns.
+    if (userRole !== "admin" && targetEvent.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to delete this ticket.");
     }
 
     if (targetTicket.reservations.length > 0) {

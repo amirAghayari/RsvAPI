@@ -1,7 +1,6 @@
 import express from "express";
 import { eventController, ticketController } from "..";
 import { protect } from "../../middlewares/auth.middleware";
-import { isAdmin } from "../../middlewares/admin.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 
 import { createEventSchema } from "../../schemas/events-schema/createEven.schema";
@@ -26,10 +25,10 @@ router.get(
 );
 
 /******************************************************
- ************* ADMIN ROUTES ****************************
+ ************* AUTHENTICATED USER ROUTES ***************
  ******************************************************/
 
-router.use(protect, isAdmin);
+router.use(protect);
 
 router.post(
   "/",

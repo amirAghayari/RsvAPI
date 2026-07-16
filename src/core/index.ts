@@ -45,6 +45,7 @@ export const zarinpalService = new ZarinpalService();
 export const paymentService = new PaymentService(
   paymentRepository,
   reservationRepository,
+  reservationService,
   ticketRepository,
   userRepository,
   AppDataSource,

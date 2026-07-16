@@ -36,6 +36,7 @@ export class EventController {
    ******************************************************/
   async createEvent(req: Request, res: Response) {
     const event = await this.eventService.createEvent(
+      req.user.id,
       req.body as ICreateEventDto,
     );
     res.status(201).json({
@@ -51,6 +52,8 @@ export class EventController {
     const updatedEvent = await this.eventService.updateEvent(
       req.params.id,
       req.body as IUpdateEventDto,
+      req.user.id,
+      req.user.role,
     );
 
     res.status(200).json({
@@ -64,7 +67,11 @@ export class EventController {
    *********************************************************/
 
   async deleteEvent(req: Request, res: Response) {
-    await this.eventService.deleteEvent(req.params.id);
+    await this.eventService.deleteEvent(
+      req.params.id,
+      req.user.id,
+      req.user.role,
+    );
 
     res.status(204).json({
       status: "success",

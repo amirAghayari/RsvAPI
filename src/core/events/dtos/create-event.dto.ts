@@ -4,5 +4,5 @@ export interface ICreateEventDto {
   location: string;
   startsAt: Date;
   endsAt: Date;
-  userId: string;
+  userId?: string;
 }

@@ -1,7 +1,6 @@
 import express from "express";
 import { ticketController } from "..";
 import { protect } from "../../middlewares/auth.middleware";
-import { isAdmin } from "../../middlewares/admin.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { updateTicketSchema } from "../../schemas/tickets-schema/updateTicket.schema";
 
@@ -15,14 +14,12 @@ const router = express.Router();
 router.get("/:id", ticketController.findTicketById.bind(ticketController));
 
 /******************************************************
- ************* ADMIN ROUTES ****************************
+ ************* AUTHENTICATED USER ROUTES ***************
  ******************************************************/
 
-router.use(protect, isAdmin);
+router.use(protect);
 
-// Get all tickets (Admin Dashboard)
-router.get("/", ticketController.findAllTickets.bind(ticketController));
-
+// Routes below are for authenticated users and ownership is checked in the service.
 router.patch(
   "/:id",
   validate(updateTicketSchema),

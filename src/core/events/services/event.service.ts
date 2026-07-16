@@ -4,6 +4,7 @@ import { Event } from "../event.entity";
 import { ICreateEventDto } from "../dtos/create-event.dto";
 import { IUpdateEventDto } from "../dtos/update-event.dto";
 import { BadRequestError } from "../../../errors/bad-request-error";
+import { ForbiddenError } from "../../../errors/forbidden-error";
 import { EventStatus } from "../../../utils/event.status";
 import { TicketRepository } from "../../tickets/ticket.repository";
 
@@ -48,11 +49,16 @@ export class EventService {
   /******************************************************
    ************* @description POST HANDLERS *************
    ******************************************************/
-  async createEvent(createEventDto: ICreateEventDto): Promise<Event> {
+  async createEvent(
+    userId: string,
+    createEventDto: ICreateEventDto,
+  ): Promise<Event> {
     if (Object.keys(createEventDto).length === 0) {
       throw new BadRequestError("No fields provided for create.");
     }
 
+    // The authenticated user is the event owner by default.
+    // We do not trust the client to send arbitrary userId.
     const now = new Date();
     const startsAt = new Date(createEventDto.startsAt);
     const endsAt = new Date(createEventDto.endsAt);
@@ -67,7 +73,10 @@ export class EventService {
       throw new BadRequestError("End time must be after start time.");
     }
 
-    const newEvent = await this.eventRepository.createEvent(createEventDto);
+    const newEvent = await this.eventRepository.createEvent({
+      ...createEventDto,
+      userId: userId,
+    });
 
     return newEvent;
   }
@@ -78,11 +87,18 @@ export class EventService {
   async updateEvent(
     eventId: string,
     updateEventDto: IUpdateEventDto,
+    userId?: string,
+    userRole?: string,
   ): Promise<Event> {
     const targetEvent = await this.eventRepository.findById(eventId);
 
     if (!targetEvent) {
       throw new NotFoundError(`Event with id ${eventId} not found.`);
+    }
+
+    // Only the owner or an admin can modify an event.
+    if (userRole !== "admin" && targetEvent.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to update this event.");
     }
 
     if (Object.keys(updateEventDto).length === 0) {
@@ -226,12 +242,22 @@ export class EventService {
    ************* @description DELETE HANDLERS *************
    *******************************************************/
 
-  async deleteEvent(eventId: string): Promise<void> {
+  async deleteEvent(
+    eventId: string,
+    userId?: string,
+    userRole?: string,
+  ): Promise<void> {
     const targetEvent = await this.eventRepository.findById(eventId);
 
     if (!targetEvent) {
       throw new NotFoundError("Event with this id does not exist");
     }
+
+    // Only the organizer or an admin can remove an event.
+    if (userRole !== "admin" && targetEvent.userId !== userId) {
+      throw new ForbiddenError("You are not allowed to delete this event.");
+    }
+
     if (
       targetEvent.status === EventStatus.PUBLISHED ||
       targetEvent.status === EventStatus.FINISHED ||
