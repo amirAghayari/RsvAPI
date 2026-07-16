@@ -107,9 +107,7 @@ export class EventService {
 
     const now = new Date();
 
-    /********************************************************
-     **************** STATUS VALIDATION **********************
-     ********************************************************/
+    //status valdation
 
     if (updateEventDto.status) {
       const currentStatus = targetEvent.status;
@@ -159,10 +157,7 @@ export class EventService {
           );
       }
 
-      /******************************************************
-       *************** PUBLISH VALIDATIONS ******************
-       ******************************************************/
-
+      //publish validations
       if (newStatus === EventStatus.PUBLISHED) {
         // Only an admin may approve an event for public sale.
         if (userRole !== "admin") {
@@ -196,10 +191,7 @@ export class EventService {
       }
     }
 
-    /********************************************************
-     **************** DATE VALIDATION ************************
-     ********************************************************/
-
+    // date validation
     if (
       targetEvent.status !== EventStatus.DRAFT &&
       (updateEventDto.startsAt || updateEventDto.endsAt)
@@ -225,9 +217,7 @@ export class EventService {
       throw new BadRequestError("Event end time must be after start time.");
     }
 
-    /********************************************************
-     **************** UPDATE EVENT ***************************
-     ********************************************************/
+    // update event
 
     const updatedEvent = await this.eventRepository.updateEvent(
       eventId,

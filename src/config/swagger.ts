@@ -14,10 +14,10 @@ const options = {
     ],
 
     components: {
-      securitySchemas: {
+      securitySchemes: {
         bearerAuth: {
           type: "http",
-          schema: "bearer",
+          scheme: "bearer",
           bearerFormat: "JWT",
         },
       },
