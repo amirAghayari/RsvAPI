@@ -1,34 +1,9 @@
-import swaggerJSDoc from "swagger-jsdoc";
-const options = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Event Reservation API",
-      version: "1.0.0",
-      description: "API Documentation",
-    },
-    servers: [
-      {
-        url: "http://localhost:3000/api/V1",
-      },
-    ],
+import fs from "fs";
+import path from "path";
+import yaml from "yaml";
 
-    components: {
-      securitySchemes: {
-        bearerAuth: {
-          type: "http",
-          scheme: "bearer",
-          bearerFormat: "JWT",
-        },
-      },
-    },
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
-  },
-  apis: ["./src/**/*.ts"],
-};
+const swaggerPath = path.resolve(__dirname, "../../docs/user-auth-openapi.yaml");
+const swaggerFile = fs.readFileSync(swaggerPath, "utf8");
+const swaggerSpec = yaml.parse(swaggerFile);
 
-export default swaggerJSDoc(options);
+export default swaggerSpec;

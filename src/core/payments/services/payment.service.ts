@@ -162,10 +162,10 @@ export class PaymentService {
       }
 
       payment.status = PaymentStatus.SUCCESS;
-      payment.refId = verify.refId;
-      payment.cardPan = verify.cardPan;
-      payment.fee = verify.fee;
-      payment.feeType = verify.feeType;
+      payment.refId = verify.refId ?? null;
+      payment.cardPan = verify.cardPan ?? null;
+      payment.fee = verify.fee ?? null;
+      payment.feeType = verify.feeType ?? null;
       payment.paidAt = new Date();
 
       await this.paymentRepository.savePayment(payment, manager);

@@ -4,6 +4,7 @@ import { User } from "../core/users/user.entity";
 import { Event } from "../core/events/event.entity";
 import { Reservation } from "../core/reservations/reservation.entity";
 import { Ticket } from "../core/tickets/ticket.entity";
+import { Payment } from "../core/payments/payment.entity";
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ const AppDataSource = new DataSource({
   synchronize: true,
   logging: true,
   // TODO : add another entities
-  entities: [User, Reservation, Event, Ticket],
+  entities: [User, Reservation, Event, Ticket, Payment],
   migrations: ["src/migrations/**/*.ts"],
 });
 

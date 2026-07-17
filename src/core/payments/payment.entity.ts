@@ -37,7 +37,9 @@ export class Payment {
   user: User;
 
   @Column({
-    // type: "",
+    type: "decimal",
+    precision: 12,
+    scale: 2,
   })
   amount: number;
 
@@ -58,31 +60,37 @@ export class Payment {
 
   @Index({ unique: true })
   @Column({
+    type: "varchar",
     nullable: true,
   })
-  authority: string;
+  authority: string | null;
 
   @Index({ unique: true })
   @Column({
+    type: "varchar",
     nullable: true,
   })
-  refId: string | undefined;
+  refId: string | null;
 
   @Column({
+    type: "varchar",
     nullable: true,
   })
-  cardPan: string | undefined;
+  cardPan: string | null;
 
   @Column({
+    type: "varchar",
     nullable: true,
   })
-  feeType: string | undefined;
+  feeType: string | null;
 
   @Column({
-    type: "integer",
+    type: "decimal",
+    precision: 12,
+    scale: 2,
     nullable: true,
   })
-  fee: number | undefined;
+  fee: number | null;
 
   @Column({
     type: "timestamp",
