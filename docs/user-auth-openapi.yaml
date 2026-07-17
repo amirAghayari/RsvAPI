@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
-  title: Ticket Express - User & Auth API
+  title: Ticket Express - User, Auth & Event API
   version: 1.0.0
   description: |
-    Complete API documentation for the User/Auth module of the Ticket Express project.
+    Complete API documentation for the User/Auth and Event modules of the Ticket Express project.
 
     This file is based on the actual routes and current router/controller/service structure used in the codebase.
-    All endpoint paths in this module are prefixed with /api/V1/users.
+    User/Auth endpoints are prefixed with /api/V1/users, while Event endpoints are prefixed with /api/V1/events.
 
 servers:
   - url: http://localhost:3000/api/V1

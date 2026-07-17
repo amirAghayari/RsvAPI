@@ -1,0 +1,431 @@
+openapi: 3.0.3
+info:
+  title: Ticket Express - Event API
+  version: 1.0.0
+  description: |
+    Complete API documentation for the Event module of the Ticket Express project.
+
+    This file is based on the actual routes and current router/controller/service structure used in the codebase.
+    Event endpoints are prefixed with /api/V1/events.
+
+servers:
+  - url: http://localhost:3000/api/V1
+    description: Local development server
+  - url: https://{host}/api/V1
+    description: Production server
+    variables:
+      host:
+        default: example.com
+        description: Base URL for the production environment
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token should be sent in the Authorization header as Bearer <token>.
+
+  schemas:
+    Event:
+      type: object
+      required: [id, title, location, startsAt, endsAt, status, userId]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 5cb04f8f-1234-47dd-9463-9d4e5ac6e6e8
+        title:
+          type: string
+          example: Tech Conference 2026
+        description:
+          type: string
+          nullable: true
+          example: A full-day event for developers and founders.
+        location:
+          type: string
+          example: Tehran, Iran
+        startsAt:
+          type: string
+          format: date-time
+          example: 2026-08-15T18:00:00.000Z
+        endsAt:
+          type: string
+          format: date-time
+          example: 2026-08-15T21:00:00.000Z
+        status:
+          type: string
+          enum: [draft, published, canceled, finished, in_progress]
+          example: draft
+        userId:
+          type: string
+          format: uuid
+          example: 6d10c93f-bf3d-4fa6-ae42-4558742c56df
+
+    CreateEventRequest:
+      type: object
+      required: [title, location, startsAt, endsAt]
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: Tech Conference 2026
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          example: A full-day event for developers and founders.
+        location:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: Tehran, Iran
+        startsAt:
+          type: string
+          format: date-time
+          example: 2026-08-15T18:00:00.000Z
+        endsAt:
+          type: string
+          format: date-time
+          example: 2026-08-15T21:00:00.000Z
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: Updated Event Title
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          example: Updated event description
+        location:
+          type: string
+          minLength: 2
+          maxLength: 200
+          example: Shiraz, Iran
+        startsAt:
+          type: string
+          format: date-time
+          example: 2026-08-16T18:00:00.000Z
+        endsAt:
+          type: string
+          format: date-time
+          example: 2026-08-16T21:00:00.000Z
+        status:
+          type: string
+          enum: [draft, published, canceled, finished, in_progress]
+          example: published
+
+    EventListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        results:
+          type: integer
+          example: 8
+        pagination:
+          type: object
+          nullable: true
+        data:
+          type: object
+          properties:
+            events:
+              type: array
+              items:
+                $ref: "#/components/schemas/Event"
+
+    ErrorResponse:
+      type: object
+      required: [status, errors]
+      properties:
+        status:
+          type: string
+          example: error
+        errors:
+          type: array
+          items:
+            type: object
+            required: [message]
+            properties:
+              field:
+                type: string
+                nullable: true
+                example: null
+              message:
+                type: string
+                example: Something went wrong.
+
+paths:
+  /events:
+    get:
+      tags: [Event]
+      summary: Get all events
+      description: |
+        Returns a paginated and filterable list of events. The endpoint supports standard query filtering, sorting, searching, and pagination through the APIFeatures utility.
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            example: 8
+        - in: query
+          name: sort
+          schema:
+            type: string
+            example: startsAt
+        - in: query
+          name: fields
+          schema:
+            type: string
+            example: id,title,status
+        - in: query
+          name: search
+          schema:
+            type: string
+            example: conference
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [draft, published, canceled, finished, in_progress]
+        - in: query
+          name: location
+          schema:
+            type: string
+        - in: query
+          name: startsAt[gte]
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Events list fetched successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventListResponse"
+        "404":
+          description: Requested page does not exist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags: [Event]
+      summary: Create a new event
+      description: |
+        Creates a new event and automatically assigns the authenticated user as the organizer. The event is created in draft mode by default.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "201":
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      event:
+                        $ref: "#/components/schemas/Event"
+        "400":
+          description: Invalid input, invalid date, or business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+
+  /events/{id}:
+    get:
+      tags: [Event]
+      summary: Get an event by ID
+      description: |
+        Retrieves a single event by its UUID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Event fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      event:
+                        $ref: "#/components/schemas/Event"
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Event]
+      summary: Update an event
+      description: |
+        Updates an event only if the authenticated user is the organizer or an admin. Schedule changes are blocked after the event is published.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventRequest"
+      responses:
+        "200":
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      updatedEvent:
+                        $ref: "#/components/schemas/Event"
+        "400":
+          description: Invalid event status transition or invalid schedule update
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User is not allowed to modify this event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Event]
+      summary: Delete an event
+      description: |
+        Deletes an event only if the authenticated user is the organizer or an admin. Published, in-progress, and finished events cannot be deleted.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Event deleted successfully
+        "400":
+          description: Event cannot be deleted because of its current status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: User is not allowed to delete this event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /events/{eventId}/tickets:
+    get:
+      tags: [Event]
+      summary: Get tickets for an event
+      description: |
+        Returns all tickets that belong to a specific event.
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Event tickets fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    example: 2
+                  data:
+                    type: object
+                    properties:
+                      tickets:
+                        type: array
+                        items:
+                          type: object
+                          additionalProperties: true
+        "404":
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
