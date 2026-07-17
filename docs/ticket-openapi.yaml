@@ -1,0 +1,267 @@
+components:
+  schemas:
+    Ticket:
+      type: object
+      required: [id, eventId, title, price, capacity, maxPerUser, saleStartsAt, saleEndsAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 7f0623d4-5bd2-40c4-baa4-c0ee50e7a809
+        eventId:
+          type: string
+          format: uuid
+          example: 5cb04f8f-1234-47dd-9463-9d4e5ac6e6e8
+        title:
+          type: string
+          example: VIP Pass
+        description:
+          type: string
+          nullable: true
+          example: Premium access to all sessions.
+        price:
+          type: number
+          format: float
+          example: 250000
+        capacity:
+          type: integer
+          example: 100
+        reservedCount:
+          type: integer
+          example: 36
+        maxPerUser:
+          type: integer
+          example: 4
+        saleStartsAt:
+          type: string
+          format: date-time
+          example: 2026-08-01T00:00:00.000Z
+        saleEndsAt:
+          type: string
+          format: date-time
+          example: 2026-08-15T23:59:59.000Z
+
+    CreateTicketRequest:
+      type: object
+      required: [eventId, title, price, capacity, saleStartsAt, saleEndsAt]
+      properties:
+        eventId:
+          type: string
+          format: uuid
+          example: 5cb04f8f-1234-47dd-9463-9d4e5ac6e6e8
+        title:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: Standard Pass
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+          example: Full conference admission.
+        price:
+          type: number
+          minimum: 0
+          maximum: 999999.99
+          example: 150000
+        capacity:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          example: 120
+        maxPerUser:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          example: 2
+        saleStartsAt:
+          type: string
+          format: date-time
+          example: 2026-08-01T00:00:00.000Z
+        saleEndsAt:
+          type: string
+          format: date-time
+          example: 2026-08-10T00:00:00.000Z
+
+    UpdateTicketRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Updated Ticket Title
+        description:
+          type: string
+          nullable: true
+          example: Updated ticket description
+        price:
+          type: number
+          example: 180000
+        capacity:
+          type: integer
+          example: 150
+        maxPerUser:
+          type: integer
+          example: 3
+        saleStartsAt:
+          type: string
+          format: date-time
+          example: 2026-08-02T00:00:00.000Z
+        saleEndsAt:
+          type: string
+          format: date-time
+          example: 2026-08-12T00:00:00.000Z
+
+    TicketListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        results:
+          type: integer
+          example: 2
+        pagination:
+          type: object
+          nullable: true
+        data:
+          type: object
+          properties:
+            tickets:
+              type: array
+              items:
+                $ref: "#/components/schemas/Ticket"
+
+    ErrorResponse:
+      type: object
+      required: [status, errors]
+      properties:
+        status:
+          type: string
+          example: error
+        errors:
+          type: array
+          items:
+            type: object
+            required: [message]
+            properties:
+              field:
+                type: string
+                nullable: true
+                example: null
+              message:
+                type: string
+                example: Something went wrong.
+
+paths:
+  /tickets/{id}:
+    get:
+      tags: [Ticket]
+      summary: Get ticket by ID
+      description: |
+        Returns a single ticket by its UUID. This endpoint is public and can be used by clients to show ticket details before reservation.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Ticket fetched successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      ticket:
+                        $ref: "#/components/schemas/Ticket"
+        "404":
+          description: Ticket not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Ticket]
+      summary: Update a ticket
+      description: |
+        Updates a ticket's information. Only the ticket owner/creator or an admin can change it, depending on the service rule.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTicketRequest"
+      responses:
+        "200":
+          description: Ticket updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      updatedTicket:
+                        $ref: "#/components/schemas/Ticket"
+        "403":
+          description: Forbidden. User is not allowed to update this ticket.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Ticket not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Ticket]
+      summary: Delete a ticket
+      description: |
+        Deletes a ticket. Ownership and admin authorization is enforced in the service layer.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Ticket deleted successfully.
+        "403":
+          description: Forbidden. User is not allowed to delete this ticket.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Ticket not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

@@ -1,0 +1,335 @@
+components:
+  schemas:
+    Payment:
+      type: object
+      required: [id, reservationId, userId, amount, status, gateway, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 0d69579b-7ec3-4635-8f6d-cd8f5a082cad
+        reservationId:
+          type: string
+          format: uuid
+          example: e5c90b60-c0f6-4a6a-8fbb-1d4d6295e370
+        userId:
+          type: string
+          format: uuid
+          example: 6d10c93f-bf3d-4fa6-ae42-4558742c56df
+        amount:
+          type: number
+          format: float
+          example: 500000
+        status:
+          type: string
+          enum: [pending, success, failed]
+          example: pending
+        gateway:
+          type: string
+          enum: [zarinpal]
+          example: zarinpal
+        authority:
+          type: string
+          nullable: true
+          example: A0000000000000000000000000000000000
+        refId:
+          type: string
+          nullable: true
+          example: 123456789
+        cardPan:
+          type: string
+          nullable: true
+          example: 610433******1234
+        feeType:
+          type: string
+          nullable: true
+          example: merchant
+        fee:
+          type: number
+          nullable: true
+          example: 2500
+        paidAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: 2026-07-17T12:05:00.000Z
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-07-17T12:00:00.000Z
+
+    CreatePaymentRequest:
+      type: object
+      required: [reservationId]
+      properties:
+        reservationId:
+          type: string
+          format: uuid
+          example: e5c90b60-c0f6-4a6a-8fbb-1d4d6295e370
+
+    PaymentListResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        results:
+          type: integer
+          example: 3
+        pagination:
+          type: object
+          nullable: true
+        data:
+          type: object
+          properties:
+            payments:
+              type: array
+              items:
+                $ref: "#/components/schemas/Payment"
+
+    ErrorResponse:
+      type: object
+      required: [status, errors]
+      properties:
+        status:
+          type: string
+          example: error
+        errors:
+          type: array
+          items:
+            type: object
+            required: [message]
+            properties:
+              field:
+                type: string
+                nullable: true
+                example: null
+              message:
+                type: string
+                example: Something went wrong.
+
+paths:
+  /payments/verify:
+    get:
+      tags: [Payment]
+      summary: Verify Zarinpal payment callback
+      description: |
+        Verifies a payment callback from Zarinpal and finalizes the reservation if the payment is approved.
+      parameters:
+        - in: query
+          name: Authority
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: Status
+          required: true
+          schema:
+            type: string
+            enum: [OK, NOK]
+      responses:
+        "200":
+          description: Payment verification completed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      payment:
+                        $ref: "#/components/schemas/Payment"
+        "400":
+          description: Payment canceled or verification failure.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Payment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments:
+    post:
+      tags: [Payment]
+      summary: Create a payment request
+      description: |
+        Creates a payment record for a valid reservation and returns a redirect URL to the configured gateway.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentRequest"
+      responses:
+        "201":
+          description: Payment request created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      paymentUrl:
+                        type: string
+                        format: uri
+                        example: https://www.zarinpal.com/pg/StartPay/<authority>
+        "400":
+          description: Reservation is invalid for payment or duplicate pending payment exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized.
+
+    get:
+      tags: [Admin]
+      summary: Get all payments (Admin)
+      description: |
+        Returns a paginated list of all payment records for administrators.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            example: 10
+      responses:
+        "200":
+          description: Payments list fetched successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentListResponse"
+        "403":
+          description: Forbidden. Admin access required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/me:
+    get:
+      tags: [Payment]
+      summary: Get my payments
+      description: |
+        Returns all payments for the authenticated user.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payments fetched successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  results:
+                    type: integer
+                    example: 2
+                  data:
+                    type: object
+                    properties:
+                      payments:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Payment"
+        "401":
+          description: Unauthorized.
+
+  /payments/{id}:
+    get:
+      tags: [Admin]
+      summary: Get payment by ID (Admin)
+      description: |
+        Returns a single payment by its UUID.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Payment fetched successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties:
+                      payment:
+                        $ref: "#/components/schemas/Payment"
+        "403":
+          description: Forbidden. Admin access required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Payment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Admin]
+      summary: Delete payment (Admin)
+      description: |
+        Permanently deletes a payment record.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Payment deleted successfully.
+        "403":
+          description: Forbidden. Admin access required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Payment not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"

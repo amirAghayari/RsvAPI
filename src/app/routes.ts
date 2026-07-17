@@ -34,9 +34,9 @@ const routes = (app: Express) => {
 
   app.use("/api/V1/users", userRouter);
   app.use("/api/V1/events", eventRouter);
-  app.use("api/v1/reservations", reservationRouter);
-  app.use("api/v1/tickets", ticketRouter);
-  app.use("api/v1/payments", paymentRouter);
+  app.use("/api/V1/reservations", reservationRouter);
+  app.use("/api/V1/tickets", ticketRouter);
+  app.use("/api/V1/payments", paymentRouter);
   //  Not found routed
   app.all("/*splat", () => {
     throw new NotFoundError("The requested page was not found.");
