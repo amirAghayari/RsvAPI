@@ -75,7 +75,7 @@ export class AuthService {
     }
 
     try {
-      await sendEmail(user.email, url, "درخواست برای ریست کردن رمز عبور");
+      await sendEmail(user.email, url, "Request to reset password.");
     } catch (err) {
       user.passwordResetToken = null;
       user.passwordResetExpires = null;

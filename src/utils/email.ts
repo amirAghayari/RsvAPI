@@ -68,7 +68,7 @@ color:#4b5563;
 font-size:16px;
 ">
 
-برای بازیابی رمز عبور روی دکمه زیر کلیک کنید.
+Click the button below to recover your password.
 
 </p>
 
@@ -89,18 +89,18 @@ font-weight:600;
 display:inline-block;
 ">
 
-بازیابی رمز عبور
+Password recovery
 
 </a>
 
 </div>
 
 <p style="color:#6b7280;">
-این لینک تا <strong>۱۰ دقیقه</strong> معتبر خواهد بود.
+This link will be valid for <strong>10 minutes</strong>.
 </p>
 
 <p style="font-size:13px;color:#9ca3af;">
-اگر این درخواست توسط شما ثبت نشده است، این ایمیل را نادیده بگیرید.
+If this request was not filed by you, please ignore this email.
 </p>
 
 </div>
