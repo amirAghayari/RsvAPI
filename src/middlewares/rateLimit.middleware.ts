@@ -7,8 +7,8 @@ import { getRedisClient } from "../config/redisClient";
 export const limiter = rateLimit({
   windowMs: ms("5m"),
   limit: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: true, //Whether to enable support for the standardized rate limit headers
+  legacyHeaders: false, //Whether to send X-RateLimit-* headers with the rate limit and the number of requests.
   message: {
     message: "Your IP requests are too high, please try again in 15 minutes.",
   },
@@ -25,8 +25,8 @@ export const limiter = rateLimit({
 export const loginLimiter = rateLimit({
   windowMs: ms("8m"),
   max: 5,
-  standardHeaders: true,
-  legacyHeaders: false,
+  standardHeaders: true, //Whether to enable support for the standardized rate limit headers
+  legacyHeaders: false, //Whether to send X-RateLimit-* headers with the rate limit and the number of requests.
   message: { message: "Too many login attempts, try again later" },
   store: new RedisStore({
     sendCommand: async (...args: string[]) => {
