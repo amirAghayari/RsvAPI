@@ -1,10 +1,10 @@
 import express, { Express } from "express";
 import cors from "cors";
 
-import rateLimit from "express-rate-limit";
 import helmet from "helmet";
-import ms from "ms";
+
 import { User } from "../core/users/user.entity";
+import { limiter } from "../middlewares/rateLimit.middleware";
 const cookieParser = require("cookie-parser");
 const hpp = require("hpp");
 const morgan = require("morgan");
@@ -46,13 +46,7 @@ const config = (app: Express) => {
   };
   app.use(cors(corsOptions));
 
-  // Limit requests
-  const limiter = rateLimit({
-    windowMs: ms("15m"),
-    limit: 100,
-    message: "Your IP requests are too high, please try again in an hour!",
-  });
-  if (process.env.NODE === "production") app.use("/api", limiter);
+  if (process.env.NODE_ENV === "production") app.use("/api", limiter);
 
   // Request's Body parser
   app.use(express.json({ limit: "5mb" }));

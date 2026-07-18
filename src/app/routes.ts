@@ -3,7 +3,7 @@ import swaggerUi from "swagger-ui-express";
 // import ReservationRouter from "./../routes/reservation.routes";
 // import EventRouter from "./../routes/event.routes";
 // import LogRouter from "./../routes/log.routes";
-import rateLimit from "express-rate-limit";
+
 import { NotFoundError } from "../errors/not-found-error";
 import { errorHandler } from "../middlewares/error-handler";
 import { userRouter } from "../core/users/user.routes";
@@ -12,14 +12,9 @@ import swaggerSpec from "./../config/swagger";
 import { reservationRouter } from "../core/reservations/reservation.routes";
 import { ticketRouter } from "../core/tickets/ticket.routes";
 import { paymentRouter } from "../core/payments/payment.routes";
+import { loginLimiter } from "../middlewares/rateLimit.middleware";
 
 const routes = (app: Express) => {
-  const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 8,
-    message: { message: "Too many login attempts, try again later" },
-  });
-
   // Swagger Ui route
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
