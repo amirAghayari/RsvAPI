@@ -3,6 +3,7 @@ import { ticketController } from "..";
 import { protect } from "../../middlewares/auth.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { updateTicketSchema } from "../../schemas/tickets-schema/updateTicket.schema";
+import { cacheRoute } from "../../middlewares/cache.middleware";
 
 const router = express.Router();
 
@@ -11,7 +12,11 @@ const router = express.Router();
  ******************************************************/
 
 // Ticket Details
-router.get("/:id", ticketController.findTicketById.bind(ticketController));
+router.get(
+  "/:id",
+  cacheRoute(120),
+  ticketController.findTicketById.bind(ticketController),
+);
 
 /******************************************************
  ************* AUTHENTICATED USER ROUTES ***************

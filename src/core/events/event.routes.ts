@@ -2,6 +2,7 @@ import express from "express";
 import { eventController, ticketController } from "..";
 import { protect } from "../../middlewares/auth.middleware";
 import { validate } from "../../middlewares/validate.middleware";
+import { cacheRoute } from "../../middlewares/cache.middleware";
 
 import { createEventSchema } from "../../schemas/events-schema/createEven.schema";
 import { updateEventSchema } from "../../schemas/events-schema/updateEvent.schema";
@@ -14,9 +15,17 @@ const router = express.Router();
  ************* PUBLIC ROUTES ***************************
  ******************************************************/
 
-router.get("/", eventController.findAllEvents.bind(eventController));
+router.get(
+  "/",
+  cacheRoute(120),
+  eventController.findAllEvents.bind(eventController),
+);
 
-router.get("/:id", eventController.findEventById.bind(eventController));
+router.get(
+  "/:id",
+  cacheRoute(120),
+  eventController.findEventById.bind(eventController),
+);
 
 // Get tickets of an event
 router.get(
