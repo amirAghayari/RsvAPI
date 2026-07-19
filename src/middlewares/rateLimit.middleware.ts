@@ -6,7 +6,7 @@ import { getRedisClient } from "../config/redisClient";
 // Limit requests
 export const limiter = rateLimit({
   windowMs: ms("5m"),
-  limit: 20,
+  limit: 100,
   standardHeaders: true, //Whether to enable support for the standardized rate limit headers
   legacyHeaders: false, //Whether to send X-RateLimit-* headers with the rate limit and the number of requests.
   message: {
