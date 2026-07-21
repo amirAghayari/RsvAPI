@@ -1,8 +1,5 @@
 import { Express, NextFunction, Request, Response } from "express";
 import swaggerUi from "swagger-ui-express";
-// import ReservationRouter from "./../routes/reservation.routes";
-// import EventRouter from "./../routes/event.routes";
-// import LogRouter from "./../routes/log.routes";
 
 import { NotFoundError } from "../errors/not-found-error";
 import { errorHandler } from "../middlewares/error-handler";

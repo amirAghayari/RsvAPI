@@ -4,7 +4,6 @@ import { ISignupDto } from "../dtos/signup.dto";
 import createSendTokenAndResponse from "../../../utils/createSendTokenAndResponse";
 import { ILoginDto } from "../dtos/login.dto";
 import { User } from "../user.entity";
-import AppDataSource from "../../../config/dataSource";
 import { IResetPasswordDto } from "../dtos/reset.password.dto";
 import { IForgotPasswordDto } from "../dtos/forgot.password.dto";
 
@@ -25,10 +24,7 @@ export class AuthController {
 
   async logout(req: Request, res: Response): Promise<void> {
     if (req.user && req.user instanceof User) {
-      const userRepo = AppDataSource.getRepository(User);
-      await userRepo.update(req.user.id, {
-        refreshToken: null,
-      });
+      await this.authService.logout(req.user.id);
     }
 
     const isProd = process.env.NODE_ENV === "production";

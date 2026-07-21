@@ -59,6 +59,15 @@ export class AuthService {
     return authenticatedUser;
   }
 
+  async logout(userId: string) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User with this not found.");
+    }
+
+    user.refreshToken = null;
+    await this.userRepository.saveUser(user);
+  }
   async forgotPassword(forgotPasswordDto: IForgotPasswordDto): Promise<void> {
     const user = await this.userRepository.findByEmail(forgotPasswordDto.email);
     if (!user) {
