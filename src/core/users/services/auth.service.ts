@@ -11,6 +11,7 @@ import { ISignupDto } from "../dtos/signup.dto";
 import { User } from "../user.entity";
 import { UserRepository } from "../user.repository";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 export class AuthService {
   constructor(private readonly userRepository: UserRepository) {}
@@ -105,10 +106,20 @@ export class AuthService {
     // Verify refresh token
     const decoded = await verifyRefreshToken(refreshToken);
 
-    const user = await this.userRepository.findById(decoded.userId);
+    const user = await this.userRepository.findById(decoded.userId, {
+      select: ["id", "email", "role", "refreshToken"],
+    });
+    if (!user || !user.refreshToken) {
+      throw new NotAuthorizedError("Invalid refresh token.");
+    }
 
-    if (!user || user.refreshToken !== refreshToken) {
-      throw new NotAuthorizedError("Refresh token has expired.");
+    const isValidRefreshToken = await bcrypt.compare(
+      refreshToken,
+      user.refreshToken,
+    );
+
+    if (!isValidRefreshToken) {
+      throw new NotAuthorizedError("Invalid refresh token.");
     }
     return user;
   }

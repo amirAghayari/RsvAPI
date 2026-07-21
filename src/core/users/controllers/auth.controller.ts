@@ -3,7 +3,6 @@ import { AuthService } from "../services/auth.service";
 import { ISignupDto } from "../dtos/signup.dto";
 import createSendTokenAndResponse from "../../../utils/createSendTokenAndResponse";
 import { ILoginDto } from "../dtos/login.dto";
-import { User } from "../user.entity";
 import { IResetPasswordDto } from "../dtos/reset.password.dto";
 import { IForgotPasswordDto } from "../dtos/forgot.password.dto";
 
@@ -23,7 +22,7 @@ export class AuthController {
   }
 
   async logout(req: Request, res: Response): Promise<void> {
-    if (req.user && req.user instanceof User) {
+    if (req.user) {
       await this.authService.logout(req.user.id);
     }
 

@@ -22,7 +22,9 @@ const routes = (app: Express) => {
 
   // API routes
 
-  app.use("/api/V1/users/login", loginLimiter);
+  if (process.env.NODE_ENV !== "test") {
+    app.use("/api/V1/users/login", loginLimiter);
+  }
 
   app.use("/api/V1/users", userRouter);
   app.use("/api/V1/events", eventRouter);

@@ -14,8 +14,11 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await clearDatabase();
-});
 
+  const result = await TestDataSource.query(`SELECT COUNT(*) FROM users`);
+
+  console.log(result);
+});
 afterAll(async () => {
   if (TestDataSource.isInitialized) {
     await TestDataSource.destroy();
