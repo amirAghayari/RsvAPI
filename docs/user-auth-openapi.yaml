@@ -106,9 +106,9 @@ components:
 
     UpdateCurrentUserPasswordRequest:
       type: object
-      required: [passwordCurrent, password, passwordConfirmation]
+      required: [currentPassword, password, passwordConfirmation]
       properties:
-        passwordCurrent:
+        currentPassword:
           type: string
           format: password
           example: OldStrongP@ssw0rd

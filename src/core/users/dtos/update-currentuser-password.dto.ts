@@ -1,5 +1,5 @@
 export interface IUpdateCurrentUserPasswordDto {
-  passwordCurrent: string;
+  currentPassword: string;
   password: string;
   passwordConfirmation: string;
 }

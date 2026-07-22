@@ -150,7 +150,7 @@ export class UserService {
 
     // check if the password current is correct
     const correct = await targetUser!.correctPassword(
-      updateCurrentUserPasswordDto.passwordCurrent,
+      updateCurrentUserPasswordDto.currentPassword,
     );
     if (!correct) {
       throw new ForbiddenError("Your current password is incorrect.");

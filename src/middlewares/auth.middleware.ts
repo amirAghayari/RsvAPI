@@ -23,13 +23,15 @@ export async function protect(
   }
 
   try {
+    console.log("TOKEN:", token);
     //  check if token is valid, if not throw an NotAuthorizedError
     const payload = verifyAccessToken(token) as AuthPayload;
     const user = await userRepository.findById(payload.userId);
 
     if (!user) {
-      const msg = "The user belonging to this token no longer exists!";
-      throw new NotAuthorizedError(msg);
+      throw new NotAuthorizedError(
+        "The user belonging to this token no longer exists!",
+      );
     }
 
     req.user = user;

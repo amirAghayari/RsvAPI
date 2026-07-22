@@ -28,11 +28,13 @@ export const TestDataSource = new DataSource({
 export async function clearDatabase() {
   const entities = TestDataSource.entityMetadatas;
 
-  for (const entity of entities) {
-    const repository = TestDataSource.getRepository(entity.name);
+  const tableNames = entities
+    .map((entity) => `"${entity.tableName}"`)
+    .join(", ");
 
-    await repository.query(
-      `TRUNCATE TABLE "${entity.tableName}" RESTART IDENTITY CASCADE`,
-    );
-  }
+  await TestDataSource.query(`
+    TRUNCATE TABLE ${tableNames}
+    RESTART IDENTITY
+    CASCADE;
+  `);
 }
