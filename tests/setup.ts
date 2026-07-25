@@ -5,10 +5,12 @@ dotenv.config({
 });
 
 import { TestDataSource, clearDatabase } from "./helpers/database";
+import AppDataSource from "../src/config/dataSource";
 
 beforeAll(async () => {
   if (!TestDataSource.isInitialized) {
     await TestDataSource.initialize();
+    await AppDataSource.initialize();
   }
 });
 

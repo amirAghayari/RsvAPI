@@ -33,6 +33,9 @@ const jestConfig: Config = {
 
   testTimeout: 30000,
 
+  // Integration suites share one test database and clear it before each test.
+  maxWorkers: 1,
+
   moduleFileExtensions: ["ts", "js", "json"],
 };
 

@@ -1,6 +1,5 @@
 import express, { Express } from "express";
 import "dotenv/config";
-import initializeDatabase from "./db";
 import routes from "./routes";
 import config from "./config";
 import { closeRedisConnection } from "../config/redisClient";
@@ -17,8 +16,6 @@ process.on("SIGINT", async () => {
   await closeRedisConnection();
   process.exit(0);
 });
-
-initializeDatabase();
 
 config(app);
 routes(app);

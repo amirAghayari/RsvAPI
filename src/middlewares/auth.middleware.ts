@@ -23,9 +23,9 @@ export async function protect(
   }
 
   try {
-    console.log("TOKEN:", token);
     //  check if token is valid, if not throw an NotAuthorizedError
     const payload = verifyAccessToken(token) as AuthPayload;
+
     const user = await userRepository.findById(payload.userId);
 
     if (!user) {
@@ -36,6 +36,7 @@ export async function protect(
 
     req.user = user;
 
+    console.log("protect middleware passed");
     next();
   } catch (err) {
     console.log(err);

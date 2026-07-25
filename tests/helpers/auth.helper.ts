@@ -16,8 +16,6 @@ async function authRequest() {
     );
   }
 
-  console.log(res.headers["x-auth-token"]);
-
   // 1. Safely extract and ensure it is treated as an array
   const cookies = res.headers["set-cookie"] || [];
   const cookieArray = Array.isArray(cookies) ? cookies : [cookies];
@@ -26,6 +24,7 @@ async function authRequest() {
   const cookieHeader = cookieArray
     .map((cookie: string) => cookie.split(";")[0])
     .join("; ");
+
   return {
     user,
     accessToken: res.headers["x-auth-token"],

@@ -74,7 +74,7 @@ export class UserController {
     const currentUser = req.user;
     res.status(200).json({
       status: "success",
-      data: { currentUser },
+      data: { user: currentUser },
     });
   }
 
@@ -124,7 +124,7 @@ export class UserController {
     );
 
     // send the response
-    createSendTokenAndResponse(updatedUser!, 200, res);
+    await createSendTokenAndResponse(updatedUser!, 200, res);
   }
 
   async uploadAvatar(req: Request, res: Response) {

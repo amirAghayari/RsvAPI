@@ -12,7 +12,6 @@ describe("Auth API", () => {
         passwordConfirmation: "Password123",
         fullName: "Test User",
       });
-      console.log(res.body);
       expect(res.status).toBe(201);
 
       expect(res.body.status).toBe("success");

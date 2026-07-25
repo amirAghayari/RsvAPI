@@ -1,7 +1,10 @@
+import initializeDatabase from "./app/db";
 import app from "./app/index";
 
 const port = process.env.PORT || 3000;
-const server = app.listen(port, () => {
+
+const server = app.listen(port, async () => {
+  await initializeDatabase();
   console.log(`server running on port ${port}`);
   console.log(`Swagger docs available at http://localhost:${port}/docs`);
 });

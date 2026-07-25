@@ -142,7 +142,9 @@ export class UserService {
     updateCurrentUserPasswordDto: IUpdateCurrentUserPasswordDto,
   ): Promise<User | null> {
     // find the user, if not found, throw an error
-    const targetUser = await this.userRepository.findById(currentUser.id);
+    const targetUser = await this.userRepository.findById(currentUser.id, {
+      select: ["id", "password"],
+    });
 
     if (!targetUser) {
       throw new NotFoundError(`User with id ${currentUser.id} not found.`);
@@ -170,7 +172,7 @@ export class UserService {
 
     await this.userRepository.saveUser(targetUser);
 
-    return targetUser;
+    return this.userRepository.findById(currentUser.id);
   }
 
   async uploadUserAvatar(userId: string, file: Express.Multer.File) {

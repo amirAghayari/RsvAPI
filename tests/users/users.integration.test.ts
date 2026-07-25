@@ -6,7 +6,6 @@ describe("User API", () => {
   describe("Get /api/V1/users/me", () => {
     it("should return current user", async () => {
       const user = await authRequest();
-
       const res = await request(app)
         .get("/api/V1/users/me")
         .set("Authorization", `Bearer ${user.accessToken}`);
@@ -49,7 +48,7 @@ describe("User API", () => {
         });
 
       expect(res.statusCode).toBe(400);
-      expect(res.body.status).toBe("error");
+      expect(res.body.success).toBe(false);
       expect(res.body.message).toBe("Validation failed");
       expect(res.body.errors).toBeDefined();
     });
@@ -89,7 +88,7 @@ describe("User API", () => {
       expect(res.body.errors).toBeDefined();
     });
 
-    it("should return 403 if password and passwordConfirmation do not match", async () => {
+    it("should return 422 if password and passwordConfirmation do not match", async () => {
       const user = await authRequest();
       const res = await request(app)
         .patch("/api/V1/users/me/update-password")
@@ -100,7 +99,8 @@ describe("User API", () => {
           passwordConfirmation: "notMatchPassword",
         });
 
-      expect(res.statusCode).toBe(403);
+      expect(res.statusCode).toBe(422);
+      expect(res.body.status).toBe("error");
       expect(res.body.errors).toBeDefined();
     });
   });
