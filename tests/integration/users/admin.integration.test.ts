@@ -1,7 +1,7 @@
 import request from "supertest";
-import app from "../../src/app";
-import { createUser, usersUrl } from "../factories/user.factory";
-import { authenticateAdmin } from "../helpers/auth.helper";
+import app from "../../../src/app";
+import { createUser, usersUrl } from "../../factories/user.factory";
+import { authenticateAdmin } from "../../helpers/auth.helper";
 
 describe("Admin user API", () => {
   describe("authorization", () => {

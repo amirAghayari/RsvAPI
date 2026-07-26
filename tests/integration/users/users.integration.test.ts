@@ -1,7 +1,7 @@
 import request from "supertest";
-import app from "../../src/app";
-import { authRequest } from "../helpers/auth.helper";
-import { usersUrl } from "../factories/user.factory";
+import app from "../../../src/app";
+import { authRequest } from "../../helpers/auth.helper";
+import { usersUrl } from "../../factories/user.factory";
 
 describe("User API", () => {
   describe("Get /api/V1/users/me", () => {

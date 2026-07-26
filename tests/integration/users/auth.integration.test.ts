@@ -1,6 +1,6 @@
 import request from "supertest";
-import app from "../../src/app";
-import { createUser, usersUrl } from "../factories/user.factory";
+import app from "../../../src/app";
+import { createUser, usersUrl } from "../../factories/user.factory";
 
 describe("Auth API", () => {
   describe("POST /api/V1/users/signup", () => {
