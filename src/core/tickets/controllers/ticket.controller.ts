@@ -56,8 +56,8 @@ export class TicketController {
   async createTicket(req: Request, res: Response) {
     const ticket = await this.ticketService.createTicket(
       req.user.id,
-      req.user.role,
       req.body as ICreateTicketDto,
+      req.user.role,
     );
 
     res.status(201).json({
