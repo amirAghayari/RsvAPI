@@ -5,7 +5,7 @@ import { ICreateEventDto } from "../dtos/create-event.dto";
 import { IUpdateEventDto } from "../dtos/update-event.dto";
 import { BadRequestError } from "../../../errors/bad-request-error";
 import { ForbiddenError } from "../../../errors/forbidden-error";
-import { EventStatus } from "../../../utils/event.status";
+import { EventStatus } from "../event.status";
 import { TicketRepository } from "../../tickets/ticket.repository";
 
 export class EventService {

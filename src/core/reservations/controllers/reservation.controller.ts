@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { ReservationService } from "../services/reservation.service";
-import { ReservationStatus } from "../../../utils/reservation.status";
+import { ReservationStatus } from "../reservation.status";
 
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}

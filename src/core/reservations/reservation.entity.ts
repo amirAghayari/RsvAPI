@@ -8,7 +8,7 @@ import {
   Index,
   OneToMany,
 } from "typeorm";
-import { ReservationStatus } from "../../utils/reservation.status";
+import { ReservationStatus } from "./reservation.status";
 import { User } from "../users/user.entity";
 import { Ticket } from "../tickets/ticket.entity";
 import { Payment } from "../payments/payment.entity";

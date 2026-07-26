@@ -9,7 +9,7 @@ import APIFeatures from "../../utils/apiFeatures";
 import { Reservation } from "./reservation.entity";
 import { IUpdateReservationDto } from "./dtos/update-reservation.dto";
 import { NotFoundError } from "../../errors/not-found-error";
-import { ReservationStatus } from "../../utils/reservation.status";
+import { ReservationStatus } from "./reservation.status";
 
 export class ReservationRepository {
   constructor(private readonly dataSource: DataSource) {}

@@ -1,4 +1,4 @@
-import { EventStatus } from "../../../utils/event.status";
+import { EventStatus } from "../event.status";
 import { ICreateEventDto } from "./create-event.dto";
 
 export type IUpdateEventDto = Partial<

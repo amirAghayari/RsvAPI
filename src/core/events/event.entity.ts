@@ -7,7 +7,7 @@ import {
   Index,
   JoinColumn,
 } from "typeorm";
-import { EventStatus } from "../../utils/event.status";
+import { EventStatus } from "./event.status";
 import { User } from "../users/user.entity";
 import { Ticket } from "../tickets/ticket.entity";
 

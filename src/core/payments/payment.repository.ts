@@ -3,7 +3,7 @@ import APIFeatures from "../../utils/apiFeatures";
 import { NotFoundError } from "../../errors/not-found-error";
 
 import { Payment } from "./payment.entity";
-import { PaymentStatus } from "../../utils/payment.status";
+import { PaymentStatus } from "./payment.status";
 import { ICreatePaymentDto } from "./dtos/create-payment.dto";
 import { IUpdatePaymentDto } from "./dtos/update-payment.dto";
 

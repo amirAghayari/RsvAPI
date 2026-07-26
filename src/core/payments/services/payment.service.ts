@@ -9,8 +9,8 @@ import { UserRepository } from "../../users/user.repository";
 import { NotFoundError } from "../../../errors/not-found-error";
 import { BadRequestError } from "../../../errors/bad-request-error";
 
-import { PaymentStatus } from "../../../utils/payment.status";
-import { ReservationStatus } from "../../../utils/reservation.status";
+import { PaymentStatus } from "../payment.status";
+import { ReservationStatus } from "../../reservations/reservation.status";
 
 import { ICreatePaymentDto } from "../dtos/create-payment.dto";
 import { ZarinpalService } from "../../integrations/zarinpal/services/zarinpal.service";

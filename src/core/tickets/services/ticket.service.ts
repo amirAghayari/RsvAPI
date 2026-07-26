@@ -6,7 +6,7 @@ import { Ticket } from "../ticket.entity";
 import { TicketRepository } from "../ticket.repository";
 import { ICreateTicketDto } from "../dtos/create-ticket.dto";
 import { IUpdateTicketDto } from "../dtos/update-ticket.dto";
-import { EventStatus } from "../../../utils/event.status";
+import { EventStatus } from "../../events/event.status";
 
 export class TicketService {
   constructor(

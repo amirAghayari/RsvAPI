@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EventStatus } from "../../utils/event.status";
+import { EventStatus } from "../../core/events/event.status";
 
 const updateEventBodySchema = z
   .object({

@@ -6,8 +6,8 @@ import { Reservation } from "../reservation.entity";
 import { ReservationRepository } from "../reservation.repository";
 import { DuplicateError } from "../../../errors/duplicate-error";
 import { BadRequestError } from "../../../errors/bad-request-error";
-import { EventStatus } from "../../../utils/event.status";
-import { ReservationStatus } from "../../../utils/reservation.status";
+import { EventStatus } from "../../events/event.status";
+import { ReservationStatus } from "../reservation.status";
 import { TicketRepository } from "../../tickets/ticket.repository";
 import { EventRepository } from "../../events/event.repository";
 

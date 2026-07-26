@@ -10,8 +10,8 @@ import {
 
 import { User } from "../users/user.entity";
 import { Reservation } from "../reservations/reservation.entity";
-import { PaymentStatus } from "../../utils/payment.status";
-import { PaymentGateway } from "../../utils/payment.gatewey";
+import { PaymentStatus } from "./payment.status";
+import { PaymentGateway } from "./payment.gatewey";
 
 @Entity("payments")
 export class Payment {
