@@ -1,6 +1,8 @@
 import { User } from "../../src/core/users/user.entity";
 import { TestDataSource } from "../helpers/database";
 
+export const usersUrl = "/api/V1/users";
+
 let userCounter = 0;
 
 export async function createUser(data?: Partial<User>) {

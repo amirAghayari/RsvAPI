@@ -1,17 +1,19 @@
 import request from "supertest";
 import app from "../../src/app";
-import { createUser } from "../factories/user.factory";
+import { createUser, usersUrl } from "../factories/user.factory";
 
 describe("Auth API", () => {
   describe("POST /api/V1/users/signup", () => {
     it("should create new user", async () => {
       const email = `newuser-${Date.now()}@test.com`;
-      const res = await request(app).post("/api/V1/users/signup").send({
-        email,
-        password: "Password123",
-        passwordConfirmation: "Password123",
-        fullName: "Test User",
-      });
+      const res = await request(app)
+        .post(usersUrl + "/signup")
+        .send({
+          email,
+          password: "Password123",
+          passwordConfirmation: "Password123",
+          fullName: "Test User",
+        });
       expect(res.status).toBe(201);
 
       expect(res.body.status).toBe("success");
@@ -29,22 +31,26 @@ describe("Auth API", () => {
         email: "duplicate@test.com",
       });
 
-      const res = await request(app).post("/api/V1/users/signup").send({
-        email: user.email,
-        password: "Password123",
-        passwordConfirmation: "Password123",
-        fullName: "Another User",
-      });
+      const res = await request(app)
+        .post(usersUrl + "/signup")
+        .send({
+          email: user.email,
+          password: "Password123",
+          passwordConfirmation: "Password123",
+          fullName: "Another User",
+        });
 
       expect(res.status).toBe(409);
     });
 
     it("should reject invalid signup data", async () => {
-      const res = await request(app).post("/api/V1/users/signup").send({
-        email: "invalid-email",
-        password: "123",
-        passwordConfirmation: "456",
-      });
+      const res = await request(app)
+        .post(usersUrl + "/signup")
+        .send({
+          email: "invalid-email",
+          password: "123",
+          passwordConfirmation: "456",
+        });
 
       expect(res.status).toBe(400);
     });
@@ -54,7 +60,7 @@ describe("Auth API", () => {
     it("should login user and return token", async () => {
       const user = await createUser();
 
-      const res = await request(app).post("/api/V1/users/login").send({
+      const res = await request(app).post(`${usersUrl}/login`).send({
         email: user.email,
         password: "Password123",
       });
@@ -71,7 +77,7 @@ describe("Auth API", () => {
     it("should reject wrong password", async () => {
       const user = await createUser();
 
-      const res = await request(app).post("/api/V1/users/login").send({
+      const res = await request(app).post(`${usersUrl}/login`).send({
         email: user.email,
         password: "WrongPassword",
       });
@@ -80,7 +86,7 @@ describe("Auth API", () => {
     });
 
     it("should reject unknown email", async () => {
-      const res = await request(app).post("/api/V1/users/login").send({
+      const res = await request(app).post(`${usersUrl}/login`).send({
         email: "unknown@test.com",
         password: "Password123",
       });
@@ -93,7 +99,7 @@ describe("Auth API", () => {
     it("should logout authenticated user", async () => {
       const user = await createUser();
 
-      const loginRes = await request(app).post("/api/V1/users/login").send({
+      const loginRes = await request(app).post(`${usersUrl}/login`).send({
         email: user.email,
         password: "Password123",
       });
@@ -114,7 +120,7 @@ describe("Auth API", () => {
     it("should refresh access token", async () => {
       const user = await createUser();
 
-      const loginRes = await request(app).post("/api/V1/users/login").send({
+      const loginRes = await request(app).post(`${usersUrl}/login`).send({
         email: user.email,
         password: "Password123",
       });

@@ -109,12 +109,14 @@ export class UserService {
       );
     }
 
-    const updateUser = await this.userRepository.userUpdate(
-      userId,
-      updateUserDto,
-    );
+    targetUser.fullName = updateUserDto.fullName ?? targetUser.fullName;
+    targetUser.email = updateUserDto.email ?? targetUser.email;
+    targetUser.avatar = updateUserDto.avatar ?? targetUser.avatar;
+    if (updateUserDto.password) {
+      targetUser.password = updateUserDto.password;
+    }
 
-    return updateUser;
+    return this.userRepository.saveUser(targetUser);
   }
 
   async updateCurrentUserInfo(

@@ -1,13 +1,14 @@
 import request from "supertest";
 import app from "../../src/app";
-import authRequest from "../helpers/auth.helper";
+import { authRequest } from "../helpers/auth.helper";
+import { usersUrl } from "../factories/user.factory";
 
 describe("User API", () => {
   describe("Get /api/V1/users/me", () => {
     it("should return current user", async () => {
       const user = await authRequest();
       const res = await request(app)
-        .get("/api/V1/users/me")
+        .get(`${usersUrl}/me`)
         .set("Authorization", `Bearer ${user.accessToken}`);
 
       expect(res.statusCode).toBe(200);
@@ -22,7 +23,7 @@ describe("User API", () => {
       const user = await authRequest();
 
       const res = await request(app)
-        .patch("/api/V1/users/me")
+        .patch(`${usersUrl}/me`)
         .set("Authorization", `Bearer ${user.accessToken}`)
         .send({
           fullName: "UpdatedFirstName",
@@ -40,7 +41,7 @@ describe("User API", () => {
       const user = await authRequest();
 
       const res = await request(app)
-        .patch("/api/V1/users/me")
+        .patch(`${usersUrl}/me`)
         .set("Authorization", `Bearer ${user.accessToken}`)
         .send({
           fullName: 121,
@@ -59,7 +60,7 @@ describe("User API", () => {
       const user = await authRequest();
 
       const res = await request(app)
-        .patch("/api/V1/users/me/update-password")
+        .patch(`${usersUrl}/me/update-password`)
         .set("Authorization", `Bearer ${user.accessToken}`)
         .send({
           currentPassword: "Password123",
@@ -76,7 +77,7 @@ describe("User API", () => {
     it("should return 403 if current password is wrong", async () => {
       const user = await authRequest();
       const res = await request(app)
-        .patch("/api/V1/users/me/update-password")
+        .patch(`${usersUrl}/me/update-password`)
         .set("Authorization", `Bearer ${user.accessToken}`)
         .send({
           currentPassword: "wrongPassword",
@@ -91,7 +92,7 @@ describe("User API", () => {
     it("should return 422 if password and passwordConfirmation do not match", async () => {
       const user = await authRequest();
       const res = await request(app)
-        .patch("/api/V1/users/me/update-password")
+        .patch(`${usersUrl}/me/update-password`)
         .set("Authorization", `Bearer ${user.accessToken}`)
         .send({
           currentPassword: "Password123",
@@ -109,7 +110,7 @@ describe("User API", () => {
     it("should return 204 if user deleted successfully ", async () => {
       const user = await authRequest();
       const res = await request(app)
-        .delete("/api/V1/users/me")
+        .delete(`${usersUrl}/me`)
         .set("Authorization", `Bearer ${user.accessToken}`);
 
       expect(res.statusCode).toBe(204);
