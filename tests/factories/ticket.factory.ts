@@ -1,7 +1,7 @@
 import { Ticket } from "../../src/core/tickets/ticket.entity";
 import { TestDataSource } from "../helpers/database";
 
-export const usersUrl = "/api/V1/users";
+export const ticketsUrl = "/api/V1/tickets";
 
 export async function createTicket(data?: Partial<Ticket>) {
   const repository = TestDataSource.getRepository(Ticket);

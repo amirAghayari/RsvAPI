@@ -1,11 +1,9 @@
 import request from "supertest";
 import app from "../../../src/app";
-import { createEvent } from "../../factories/event.factory";
+import { createEvent, eventsUrl } from "../../factories/event.factory";
 import { createUser } from "../../factories/user.factory";
 import { createTicket } from "../../factories/ticket.factory";
 import { authRequest } from "../../helpers/auth.helper";
-
-const eventsUrl = "/api/V1/events";
 
 describe("Event API", () => {
   describe("Get /api/V1/events", () => {

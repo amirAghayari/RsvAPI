@@ -1,7 +1,7 @@
 import { Event } from "../../src/core/events/event.entity";
 import { TestDataSource } from "../helpers/database";
 
-export const usersUrl = "/api/V1/users";
+export const eventsUrl = "/api/V1/events";
 
 export async function createEvent(data?: Partial<Event>) {
   const repository = TestDataSource.getRepository(Event);
