@@ -1,10 +1,12 @@
 import express, { Express } from "express";
 import cors from "cors";
+import pinoHttp from "pino-http";
 
 import helmet from "helmet";
 
 import { User } from "../core/users/user.entity";
 import { limiter } from "../middlewares/rateLimit.middleware";
+import { logger } from "../logger/logger";
 const cookieParser = require("cookie-parser");
 const hpp = require("hpp");
 const morgan = require("morgan");
@@ -53,6 +55,13 @@ const config = (app: Express) => {
   app.use(express.urlencoded({ extended: false }));
   // Request's Cookie parser
   app.use(cookieParser());
+
+  // use pino logger for logs
+  app.use(
+    pinoHttp({
+      logger,
+    }),
+  );
 
   // Protect against HTTP Parameter Pollution attacks
   //TODO : Add whitelist
