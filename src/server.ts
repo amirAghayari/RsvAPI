@@ -6,15 +6,31 @@ const port = process.env.PORT || 3000;
 
 const server = app.listen(port, async () => {
   await initializeDatabase();
-  console.log(`server running on port ${port}`);
-  logger.info(`server running on port ${port}`);
-  console.log(`Swagger docs available at http://localhost:${port}/docs`);
+
+  logger.info(
+    {
+      port,
+      environment: process.env.NODE_ENV,
+    },
+    "Server started successfully",
+  );
+
+  logger.info(
+    {
+      url: `http://localhost:${port}/docs`,
+    },
+    "Swagger documentation available",
+  );
 });
 
-// shutting down server when we have Unhandled error in server
 process.on("unhandledRejection", (err: Error) => {
-  console.error("Unhandled Rejection! shutting down...");
-  console.error("Errror Message", err);
+  logger.error(
+    {
+      err,
+    },
+    "Unhandled rejection detected. Shutting down server...",
+  );
+
   server.close(() => {
     process.exit(1);
   });
