@@ -10,6 +10,7 @@ import { IUpdateUserDto } from "../dtos/update-user.dto";
 import { User } from "../user.entity";
 import { UserRepository } from "../user.repository";
 import cloudinary from "../../../config/cloudinary";
+import { logger } from "../../../logger/logger";
 
 export class UserService {
   constructor(
@@ -35,8 +36,23 @@ export class UserService {
       await this.userRepository.findAll(query);
 
     if (query.page && skip >= total) {
+      logger.warn(
+        {
+          requestedPage: query.page,
+          totalUsers: total,
+        },
+        "Invalid user pagination page requested",
+      );
+
       throw new NotFoundError("This page does not exist.");
     }
+
+    logger.info(
+      {
+        count: users.length,
+      },
+      "Users fetched successfully",
+    );
 
     return { pagination, users };
   }
@@ -49,7 +65,15 @@ export class UserService {
     },
   ): Promise<User | null> {
     const targetUser = await this.userRepository.findById(userId, options);
+
     if (!targetUser) {
+      logger.warn(
+        {
+          userId,
+        },
+        "User not found by id",
+      );
+
       throw new NotFoundError(`User with this id : ${userId} not found.`);
     }
 
@@ -64,7 +88,15 @@ export class UserService {
     },
   ): Promise<User | null> {
     const targetUser = await this.userRepository.findByEmail(email, options);
+
     if (!targetUser) {
+      logger.warn(
+        {
+          email,
+        },
+        "User not found by email",
+      );
+
       throw new NotFoundError(`User with this id : ${email} not found.`);
     }
 
@@ -73,6 +105,15 @@ export class UserService {
 
   async getDailyCounts(startDate?: Date, endDate?: Date) {
     const { start, end } = this.normalizeDateRange(startDate, endDate);
+
+    logger.debug(
+      {
+        start,
+        end,
+      },
+      "Fetching daily user counts",
+    );
+
     return this.userRepository.findCountByDay(end, start);
   }
 
@@ -87,6 +128,14 @@ export class UserService {
       password: createUserDto.password,
     });
 
+    logger.info(
+      {
+        userId: newUser.id,
+        email: newUser.email,
+      },
+      "User created successfully",
+    );
+
     return newUser;
   }
 
@@ -99,11 +148,27 @@ export class UserService {
     updateUserDto: IUpdateUserDto,
   ): Promise<User | null> {
     const targetUser = await this.userRepository.findById(userId);
+
     if (!targetUser) {
+      logger.warn(
+        {
+          userId,
+        },
+        "User update failed because user not found",
+      );
+
       throw new NotFoundError("User with this id not found. ");
     }
     // if the user is admin, only main admin can update the user
-    if (targetUser!.role === "admin") {
+
+    if (targetUser.role === "admin") {
+      logger.warn(
+        {
+          userId,
+        },
+        "Unauthorized attempt to update admin account",
+      );
+
       throw new NotAuthorizedError(
         "You cannot update the admin account. Only the system administrator can do this.",
       );
@@ -112,11 +177,21 @@ export class UserService {
     targetUser.fullName = updateUserDto.fullName ?? targetUser.fullName;
     targetUser.email = updateUserDto.email ?? targetUser.email;
     targetUser.avatar = updateUserDto.avatar ?? targetUser.avatar;
+
     if (updateUserDto.password) {
       targetUser.password = updateUserDto.password;
     }
 
-    return this.userRepository.saveUser(targetUser);
+    const updatedUser = await this.userRepository.saveUser(targetUser);
+
+    logger.info(
+      {
+        userId,
+      },
+      "User updated successfully",
+    );
+
+    return updatedUser;
   }
 
   async updateCurrentUserInfo(
@@ -125,6 +200,13 @@ export class UserService {
   ): Promise<User | null> {
     // if password or passwordConfirmation is provided, throw an error
     if (updateUserDto.password) {
+      logger.warn(
+        {
+          userId: currentUser.id,
+        },
+        "Attempt to update password through profile update endpoint",
+      );
+
       throw new UnprocessableEntityError(
         "You cannot update the password with this request",
       );
@@ -135,6 +217,13 @@ export class UserService {
       email: updateUserDto.email ?? currentUser.email,
       avatar: updateUserDto.avatar ?? currentUser.avatar,
     });
+
+    logger.info(
+      {
+        userId: currentUser.id,
+      },
+      "Current user information updated",
+    );
 
     return updatedUser;
   }
@@ -149,14 +238,29 @@ export class UserService {
     });
 
     if (!targetUser) {
+      logger.warn(
+        {
+          userId: currentUser.id,
+        },
+        "Password update failed because user not found",
+      );
+
       throw new NotFoundError(`User with id ${currentUser.id} not found.`);
     }
 
     // check if the password current is correct
-    const correct = await targetUser!.correctPassword(
+    const correct = await targetUser.correctPassword(
       updateCurrentUserPasswordDto.currentPassword,
     );
+
     if (!correct) {
+      logger.warn(
+        {
+          userId: currentUser.id,
+        },
+        "Password update failed because current password is incorrect",
+      );
+
       throw new ForbiddenError("Your current password is incorrect.");
     }
 
@@ -168,11 +272,19 @@ export class UserService {
         "New password and confirm password do not match",
       );
     }
+
     targetUser.password = updateCurrentUserPasswordDto.password;
     targetUser.passwordConfirmation =
       updateCurrentUserPasswordDto.passwordConfirmation;
 
     await this.userRepository.saveUser(targetUser);
+
+    logger.info(
+      {
+        userId: currentUser.id,
+      },
+      "User password updated successfully",
+    );
 
     return this.userRepository.findById(currentUser.id);
   }
@@ -181,6 +293,13 @@ export class UserService {
     const targetUser = await this.userRepository.findById(userId);
 
     if (!targetUser) {
+      logger.warn(
+        {
+          userId,
+        },
+        "Avatar upload failed because user not found",
+      );
+
       throw new NotFoundError(`User with id ${userId} not found.`);
     }
 
@@ -189,15 +308,22 @@ export class UserService {
     }
 
     const result = await this.cloudinaryService.upload(file.buffer);
+
     await this.userRepository.userUpdate(userId, {
       avatar: result.secure_url,
       avatarPublicId: result.public_id,
     });
-  }
 
   /*******************************************************
    ************* @description DELETE HANDLERS ************
    *******************************************************/
+    logger.info(
+      {
+        userId,
+      },
+      "User avatar uploaded successfully",
+    );
+  }
 
   async deleteUser(userId: string, currentUser: User): Promise<void> {
     // find the user, if not found, throw an error
@@ -205,15 +331,38 @@ export class UserService {
 
     // if the user is admin, only main admin can delete the user
     if (targetUser!.role === "admin" || currentUser.role === "admin") {
+      logger.warn(
+        {
+          targetUserId: userId,
+          requesterId: currentUser.id,
+        },
+        "Unauthorized attempt to delete admin account",
+      );
+
       throw new NotAuthorizedError(
         "You cannot delete the admin account. Only the system administrator can do this.",
       );
     }
 
     await this.userRepository.deleteUser(userId);
+
+    logger.info(
+      {
+        deletedUserId: userId,
+        requesterId: currentUser.id,
+      },
+      "User deleted successfully",
+    );
   }
 
   async deleteCurrentUser(currentUser: User): Promise<void> {
     await this.userRepository.deleteUser(currentUser.id);
+
+    logger.info(
+      {
+        userId: currentUser.id,
+      },
+      "Current user deleted account",
+    );
   }
 }

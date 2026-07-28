@@ -10,9 +10,9 @@ import { IResetPasswordDto } from "../dtos/reset.password.dto";
 import { ISignupDto } from "../dtos/signup.dto";
 import { User } from "../user.entity";
 import { UserRepository } from "../user.repository";
-import { logger } from "../../../shared/logger";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import { logger } from "../../../logger/logger";
 
 export class AuthService {
   constructor(private readonly userRepository: UserRepository) {}
