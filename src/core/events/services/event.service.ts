@@ -7,6 +7,7 @@ import { BadRequestError } from "../../../errors/bad-request-error";
 import { ForbiddenError } from "../../../errors/forbidden-error";
 import { EventStatus } from "../event.status";
 import { TicketRepository } from "../../tickets/ticket.repository";
+import { logger } from "../../../logger/logger";
 
 export class EventService {
   constructor(
@@ -77,6 +78,14 @@ export class EventService {
       ...createEventDto,
       userId: userId,
     });
+
+    logger.info(
+      {
+        eventId: newEvent.id,
+        userId,
+      },
+      "Event created successfully",
+    );
 
     return newEvent;
   }
@@ -230,6 +239,25 @@ export class EventService {
       );
     }
 
+    if (updatedEvent.status === EventStatus.PUBLISHED) {
+      logger.info(
+        {
+          eventId,
+          approvedBy: userId,
+        },
+        "Event published successfully",
+      );
+    } else {
+      logger.info(
+        {
+          eventId,
+          userId,
+          status: updatedEvent.status,
+        },
+        "Event updated successfully",
+      );
+    }
+
     return updatedEvent;
   }
 
@@ -262,5 +290,13 @@ export class EventService {
     }
 
     await this.eventRepository.deleteEvent(eventId);
+
+    logger.info(
+      {
+        eventId,
+        userId,
+      },
+      "Event deleted successfully",
+    );
   }
 }

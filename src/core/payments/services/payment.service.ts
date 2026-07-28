@@ -15,6 +15,7 @@ import { ReservationStatus } from "../../reservations/reservation.status";
 import { ICreatePaymentDto } from "../dtos/create-payment.dto";
 import { ZarinpalService } from "../../integrations/zarinpal/services/zarinpal.service";
 import { ReservationService } from "../../reservations/services/reservation.service";
+import { logger } from "../../../logger/logger";
 
 export class PaymentService {
   constructor(
@@ -118,6 +119,16 @@ export class PaymentService {
       payment.authority = gateway.authority;
 
       await this.paymentRepository.savePayment(payment, manager);
+      logger.info(
+        {
+          paymentId: payment.id,
+          reservationId: reservation.id,
+          userId,
+          amount,
+          authority: payment.authority,
+        },
+        "Payment created successfully",
+      );
 
       return {
         paymentUrl: gateway.paymentUrl,
@@ -158,6 +169,15 @@ export class PaymentService {
 
         await this.paymentRepository.savePayment(payment, manager);
 
+        logger.warn(
+          {
+            paymentId: payment.id,
+            authority,
+            reservationId: payment.reservationId,
+          },
+          "Payment verification failed",
+        );
+
         return payment;
       }
 
@@ -169,6 +189,16 @@ export class PaymentService {
       payment.paidAt = new Date();
 
       await this.paymentRepository.savePayment(payment, manager);
+      logger.info(
+        {
+          paymentId: payment.id,
+          authority,
+          refId: payment.refId,
+          amount: payment.amount,
+          userId: payment.userId,
+        },
+        "Payment verified successfully",
+      );
 
       // lock reservation
       const reservation = await this.reservationRepository.findByIdForUpdate(
@@ -184,6 +214,14 @@ export class PaymentService {
       reservation.status = ReservationStatus.CONFIRMED;
 
       await this.reservationRepository.saveReservation(reservation, manager);
+      logger.info(
+        {
+          reservationId: reservation.id,
+          paymentId: payment.id,
+          userId: payment.userId,
+        },
+        "Reservation confirmed after successful payment",
+      );
 
       return payment;
     });
@@ -197,5 +235,12 @@ export class PaymentService {
     await this.getPaymentById(id);
 
     await this.paymentRepository.deletePayment(id);
+
+    logger.info(
+      {
+        paymentId: id,
+      },
+      "Payment deleted successfully",
+    );
   }
 }

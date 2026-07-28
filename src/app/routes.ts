@@ -10,6 +10,7 @@ import { reservationRouter } from "../core/reservations/reservation.routes";
 import { ticketRouter } from "../core/tickets/ticket.routes";
 import { paymentRouter } from "../core/payments/payment.routes";
 import { loginLimiter } from "../middlewares/rateLimit.middleware";
+import { logger } from "../logger/logger";
 
 const routes = (app: Express) => {
   // Swagger Ui route
@@ -42,7 +43,7 @@ const routes = (app: Express) => {
   if (process.env.NODE_ENV == "deployment") {
     app.use(
       (err: unknown, _req: Request, _res: Response, next: NextFunction) => {
-        console.error("RAW ERROR :", err);
+        logger.error(`RAW ERROR : ${err}`);
         next(err);
       },
     );

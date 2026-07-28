@@ -1,4 +1,5 @@
 import { createClient } from "redis";
+import { logger } from "../logger/logger";
 
 const DEFAULT_REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
@@ -12,8 +13,12 @@ export const createRedisClient = (url?: string): RedisClientInstance => {
     socket: {
       reconnectStrategy: (retries: number) => {
         if (retries > 5) {
+          logger.error({ retries }, "Redis reconnect attempts exhausted");
+
           return new Error("Redis reconnect attempts exhausted");
         }
+
+        logger.warn({ retries }, "Attempting to reconnect to Redis");
 
         return Math.min(retries * 100, 3000);
       },
@@ -21,10 +26,16 @@ export const createRedisClient = (url?: string): RedisClientInstance => {
   });
 
   client.on("error", (err) => {
-    console.error("Redis Client Error", err.message);
+    logger.error({ err }, "Redis client error");
   });
-  client.on("connect", () => console.log("✅ Redis connected successfully"));
-  client.on("ready", () => console.log("✅ Redis connected and ready"));
+
+  client.on("connect", () => {
+    logger.info("Redis connected");
+  });
+
+  client.on("ready", () => {
+    logger.info("Redis is ready");
+  });
 
   return client;
 };
@@ -38,6 +49,7 @@ export const getRedisClient = async (): Promise<RedisClientInstance> => {
   }
 
   if (!redisClient.isReady && !redisClient.isOpen) {
+    logger.warn("Redis connection lost. Reconnecting...");
     await redisClient.connect();
   }
 
@@ -47,6 +59,7 @@ export const getRedisClient = async (): Promise<RedisClientInstance> => {
 export const closeRedisConnection = async () => {
   if (redisClient) {
     await redisClient.quit();
+    logger.info("Redis connection closed");
     redisClient = null;
   }
 };
