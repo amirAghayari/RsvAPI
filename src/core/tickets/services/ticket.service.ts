@@ -85,7 +85,7 @@ export class TicketService {
     }
 
     // Only the event owner or admin can create tickets for that event.
-    if (userRole !== "admin" || targetEvent.userId !== userId) {
+    if (userRole !== "admin" && targetEvent.userId !== userId) {
       throw new ForbiddenError(
         "You are not allowed to create tickets for this event.",
       );

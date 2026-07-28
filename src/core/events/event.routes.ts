@@ -4,7 +4,7 @@ import { protect } from "../../middlewares/auth.middleware";
 import { validate } from "../../middlewares/validate.middleware";
 import { cacheRoute } from "../../middlewares/cache.middleware";
 
-import { createEventSchema } from "../../schemas/events-schema/createEven.schema";
+import { createEventSchema } from "../../schemas/events-schema/createEvent.schema";
 import { updateEventSchema } from "../../schemas/events-schema/updateEvent.schema";
 
 import { createTicketSchema } from "../../schemas/tickets-schema/createTicket.schema";
