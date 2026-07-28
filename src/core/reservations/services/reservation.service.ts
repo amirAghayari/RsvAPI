@@ -10,6 +10,7 @@ import { EventStatus } from "../../events/event.status";
 import { ReservationStatus } from "../reservation.status";
 import { TicketRepository } from "../../tickets/ticket.repository";
 import { EventRepository } from "../../events/event.repository";
+import { logger } from "../../../logger/logger";
 
 export class ReservationService {
   constructor(
@@ -267,11 +268,25 @@ export class ReservationService {
       if (event.status === EventStatus.PUBLISHED && event.startsAt <= now) {
         event.status = EventStatus.IN_PROGRESS;
         await this.eventRepository.saveEvent(event, manager);
+        logger.info(
+          {
+            eventId: event.id,
+            status: event.status,
+          },
+          "Event status updated automatically",
+        );
       }
 
       if (event.status === EventStatus.IN_PROGRESS && event.endsAt <= now) {
         event.status = EventStatus.FINISHED;
         await this.eventRepository.saveEvent(event, manager);
+        logger.info(
+          {
+            eventId: event.id,
+            status: event.status,
+          },
+          "Event status updated automatically",
+        );
       }
 
       if (
@@ -345,6 +360,17 @@ export class ReservationService {
         manager,
       );
 
+      logger.info(
+        {
+          reservationId: reservation.id,
+          userId,
+          ticketId,
+          quantity,
+          expiresAt,
+        },
+        "Reservation created successfully",
+      );
+
       return reservation;
     });
   }
@@ -414,6 +440,15 @@ export class ReservationService {
 
       await this.reservationRepository.saveReservation(reservation, manager);
 
+      logger.info(
+        {
+          reservationId,
+          userId,
+          ticketId: reservation.ticketId,
+        },
+        "Reservation canceled successfully",
+      );
+
       return reservation;
     });
   }
@@ -464,6 +499,14 @@ export class ReservationService {
       reservation.status = ReservationStatus.EXPIRED;
 
       await this.reservationRepository.saveReservation(reservation, manager);
+      logger.info(
+        {
+          reservationId: reservation.id,
+          ticketId: reservation.ticketId,
+          userId: reservation.userId,
+        },
+        "Reservation expired",
+      );
     });
   }
 
@@ -473,6 +516,14 @@ export class ReservationService {
 
     for (const reservation of reservations) {
       await this.expireReservation(reservation.id);
+    }
+    if (reservations.length > 0) {
+      logger.info(
+        {
+          expiredCount: reservations.length,
+        },
+        "Expired reservations processed",
+      );
     }
   }
 
@@ -489,5 +540,11 @@ export class ReservationService {
     }
 
     await this.reservationRepository.deleteReservation(id);
+    logger.info(
+      {
+        reservationId: id,
+      },
+      "Reservation deleted successfully",
+    );
   }
 }
