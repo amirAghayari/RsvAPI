@@ -1,6 +1,4 @@
 export interface ICreateTicketDto {
-  eventId: string;
-
   title: string;
   description?: string;
 

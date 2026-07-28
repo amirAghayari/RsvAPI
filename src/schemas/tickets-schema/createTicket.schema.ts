@@ -3,7 +3,6 @@ import { z } from "zod";
 export const createTicketSchema = z.object({
   body: z
     .object({
-      eventId: z.string(),
       title: z
         .string()
         .min(3, "Title must be at least 3 characters")

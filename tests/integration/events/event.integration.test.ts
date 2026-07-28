@@ -14,7 +14,7 @@ describe("Event API", () => {
       expect(res.body.status).toBe("success");
       expect(res.body.results).toBeDefined();
       expect(res.body.pagination).toBeDefined();
-      expect(res.body.data.events).toBeDefined();
+      expect(Array.isArray(res.body.data.events)).toBe(true);
     });
   });
   describe("Get /api/V1/events/:id", () => {
@@ -86,7 +86,7 @@ describe("Event API", () => {
           saleEndsAt: new Date(Date.now() + 200000),
         });
 
-      console.error(res.error);
+      console.log(res.body);
 
       expect(res.statusCode).toBe(201);
       expect(res.body.status).toBe("success");
@@ -126,8 +126,6 @@ describe("Event API", () => {
       const res = await request(app)
         .delete(`${eventsUrl}/${event.id}`)
         .set("Authorization", `Bearer ${user.accessToken}`);
-
-      console.error(res.error);
 
       expect(res.statusCode).toBe(204);
     });

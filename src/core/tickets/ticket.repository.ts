@@ -2,8 +2,9 @@ import { DataSource, EntityManager } from "typeorm";
 import APIFeatures from "../../utils/apiFeatures";
 import { NotFoundError } from "../../errors/not-found-error";
 import { Ticket } from "./ticket.entity";
-import { ICreateTicketDto } from "./dtos/create-ticket.dto";
+
 import { IUpdateTicketDto } from "./dtos/update-ticket.dto";
+import { ICreateTicketData } from "./dtos/create-ticket-data.dto";
 
 export class TicketRepository {
   constructor(private readonly dataSource: DataSource) {}
@@ -85,7 +86,7 @@ export class TicketRepository {
    *************************************************************/
 
   async createTicket(
-    createTicketDto: ICreateTicketDto,
+    createTicketDto: ICreateTicketData,
     manager?: EntityManager,
   ): Promise<Ticket> {
     const newTicket = this.repo(manager).create(createTicketDto);

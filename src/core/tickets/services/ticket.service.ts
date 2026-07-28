@@ -71,17 +71,14 @@ export class TicketService {
 
   async createTicket(
     userId: string,
+    eventId: string,
     createTicketDto: ICreateTicketDto,
     userRole?: string,
   ): Promise<Ticket> {
-    const targetEvent = await this.eventRepository.findById(
-      createTicketDto.eventId,
-    );
+    const targetEvent = await this.eventRepository.findById(eventId);
 
     if (!targetEvent) {
-      throw new NotFoundError(
-        `Event with this id:${createTicketDto.eventId} not found. `,
-      );
+      throw new NotFoundError(`Event with this id:${eventId} not found. `);
     }
 
     // Only the event owner or admin can create tickets for that event.
@@ -118,7 +115,10 @@ export class TicketService {
       throw new BadRequestError("Sale end time must be after sale start time.");
     }
 
-    return await this.ticketRepository.createTicket(createTicketDto);
+    return await this.ticketRepository.createTicket({
+      eventId,
+      ...createTicketDto,
+    });
   }
 
   /******************************************************

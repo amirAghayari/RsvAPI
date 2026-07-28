@@ -54,8 +54,10 @@ export class TicketController {
    ******************************************************/
 
   async createTicket(req: Request, res: Response) {
+    const { eventId } = req.params;
     const ticket = await this.ticketService.createTicket(
       req.user.id,
+      eventId,
       req.body as ICreateTicketDto,
       req.user.role,
     );
