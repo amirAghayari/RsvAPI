@@ -28,6 +28,13 @@ describe("Event API", () => {
       expect(res.body.status).toBe("success");
       expect(res.body.data.event.id).toBeDefined();
     });
+    it("it should return 404 if event not found", async () => {
+      const fakeId = "9838e0ea-97f9-468e-bd9f-a4bf7c951da7";
+
+      const res = await request(app).get(`${eventsUrl}/${fakeId}`);
+
+      expect(res.statusCode).toBe(404);
+    });
   });
   describe("Get /api/V1/events/:eventId/tickets", () => {
     it("it should return All tickets that belong the event with 200 status code", async () => {
@@ -43,6 +50,13 @@ describe("Event API", () => {
       expect(res.body.status).toBe("success");
       expect(res.body.results).toBeDefined();
       expect(res.body.data.tickets).toBeDefined();
+    });
+    it("it should return 404 if event not found", async () => {
+      const fakeId = "9838e0ea-97f9-468e-bd9f-a4bf7c951da7";
+
+      const res = await request(app).get(`${eventsUrl}/${fakeId}/tickets`);
+
+      expect(res.statusCode).toBe(404);
     });
   });
 
@@ -64,6 +78,26 @@ describe("Event API", () => {
       expect(res.statusCode).toBe(201);
       expect(res.body.status).toBe("success");
       expect(res.body.data.event.id).toBeDefined();
+    });
+    it("should reject unauthenticated request", async () => {
+      const res = await request(app)
+        .post(eventsUrl)
+        .send({
+          title: "Test",
+          location: "Location",
+          startsAt: new Date(Date.now() + 100000),
+          endsAt: new Date(Date.now() + 200000),
+        });
+
+      expect(res.statusCode).toBe(401);
+    });
+    it("it should return 400 if no field provided for created event", async () => {
+      const user = await authRequest();
+      const res = await request(app)
+        .post(`${eventsUrl}`)
+        .set("Authorization", `Bearer ${user.accessToken}`);
+
+      expect(res.statusCode).toBe(400);
     });
   });
 
