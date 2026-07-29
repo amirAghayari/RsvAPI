@@ -4,12 +4,11 @@ import { paymentController } from "..";
 
 import { protect } from "../../middlewares/auth.middleware";
 import { isAdmin } from "../../middlewares/admin.middleware";
-
-// TODO : add validation
-// import { validate } from "../../middlewares/validate.middleware";
-// import { createPaymentSchema } from "../../schemas/payment-schema/createPayment.schema";
-// import { getPaymentByIdSchema } from "../../schemas/payment-schema/getPaymentById.schema";
-// import { deletePaymentSchema } from "../../schemas/payment-schema/deletePayment.schema";
+import { validate } from "../../middlewares/validate.middleware";
+import { verifyPaymentSchema } from "../../schemas/payments-schema/verifyPayment.schema";
+import { createPaymentSchema } from "../../schemas/payments-schema/createPayment.schema";
+import { getPaymentByIdSchema } from "../../schemas/payments-schema/getPaymentById.schema";
+import { deletePaymentSchema } from "../../schemas/payments-schema/deletePayment.schema";
 
 const router = express.Router();
 
@@ -17,7 +16,11 @@ const router = express.Router();
  ************* ZARINPAL CALLBACK ***********************
  ******************************************************/
 
-router.get("/verify", paymentController.verifyPayment.bind(paymentController));
+router.get(
+  "/verify",
+  validate(verifyPaymentSchema),
+  paymentController.verifyPayment.bind(paymentController),
+);
 
 /******************************************************
  ************* AUTHENTICATED USERS *********************
@@ -31,7 +34,7 @@ router.get("/me", paymentController.getMyPayments.bind(paymentController));
 // Create payment
 router.post(
   "/",
-  // validate(createPaymentSchema),
+  validate(createPaymentSchema),
   paymentController.createPayment.bind(paymentController),
 );
 
@@ -47,14 +50,14 @@ router.get("/", paymentController.getAllPayments.bind(paymentController));
 // Get payment by id
 router.get(
   "/:id",
-  // validate(getPaymentByIdSchema),
+  validate(getPaymentByIdSchema),
   paymentController.getPaymentById.bind(paymentController),
 );
 
 // Delete payment
 router.delete(
   "/:id",
-  // validate(deletePaymentSchema),
+  validate(deletePaymentSchema),
   paymentController.deletePayment.bind(paymentController),
 );
 

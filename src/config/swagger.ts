@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import yaml from "yaml";
 
-const docsDir = path.resolve(__dirname, "../../docs");
+const docsDir = path.resolve(__dirname, "../swagger/docs");
 
 const baseSwaggerPath = path.resolve(docsDir, "base-openapi.yaml");
 const docFiles = [
