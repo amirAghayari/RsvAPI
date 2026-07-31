@@ -18,11 +18,24 @@ export const validate =
       });
     }
 
-    const data = parsed.data as Record<string, any>;
+    const data = parsed.data as {
+      body?: Request["body"];
+      params?: Request["params"];
+    };
 
-    if (data.body) Object.assign(req.body, data.body);
-    if (data.query) Object.assign(req.query, data.query);
-    if (data.params) Object.assign(req.params, data.params);
+    /**
+     * Replace validated body
+     */
+    if (data.body) {
+      req.body = data.body;
+    }
+
+    /**
+     * Replace validated params
+     */
+    if (data.params) {
+      req.params = data.params;
+    }
 
     return next();
   };

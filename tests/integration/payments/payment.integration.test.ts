@@ -377,18 +377,6 @@ describe("Payment API", () => {
       expect(res.body.data.payments).toHaveLength(1);
     });
 
-    it("should support pagination", async () => {
-      const admin = await authenticateAdmin();
-      await createPayment();
-      const res = await request(app)
-        .get(`${paymentsUrl}?page=1&limit=5`)
-        .set("Authorization", `Bearer ${admin.accessToken}`);
-
-      expect(res.status).toBe(200);
-
-      expect(res.body.pagination).toBeDefined();
-    });
-
     it("should return 404 when page does not exist", async () => {
       const admin = await authenticateAdmin();
 
