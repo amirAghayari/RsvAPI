@@ -18,11 +18,15 @@ const AppDataSource = new DataSource({
     process.env.NODE_ENV === "test"
       ? process.env.TEST_DB_NAME
       : process.env.DB_NAME,
-  synchronize: true,
-  logging: true,
+  synchronize: process.env.NODE_ENV === "development",
+  logging: process.env.NODE_ENV === "development",
   // TODO : add another entities
   entities: [User, Reservation, Event, Ticket, Payment],
-  migrations: ["src/migrations/**/*.ts"],
+  migrations: [
+    process.env.NODE_ENV === "development"
+      ? "src/migrations/**/*.ts"
+      : "dist/migrations/**/*.js",
+  ],
 });
 
 export default AppDataSource;

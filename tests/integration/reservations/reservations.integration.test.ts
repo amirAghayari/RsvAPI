@@ -4,7 +4,7 @@ import { TestDataSource } from "../../helpers/database";
 import { authRequest, authenticateAdmin } from "../../helpers/auth.helper";
 import { createEvent } from "../../factories/event.factory";
 import { createTicket } from "../../factories/ticket.factory";
-import { createUser } from "../../factories/user.factory";
+// import { createUser } from "../../factories/user.factory";
 
 import { Reservation } from "../../../src/core/reservations/reservation.entity";
 import { Ticket as TicketEntity } from "../../../src/core/tickets/ticket.entity";
@@ -52,7 +52,9 @@ describe("Reservation API - Integration Tests", () => {
       expect(res.body.data.reservation.status).toBe(ReservationStatus.PENDING);
 
       // Verify ticket capacity was reduced
-      const updatedTicket = await TestDataSource.getRepository(TicketEntity).findOne({
+      const updatedTicket = await TestDataSource.getRepository(
+        TicketEntity,
+      ).findOne({
         where: { id: ticket.id },
       });
 
@@ -290,10 +292,14 @@ describe("Reservation API - Integration Tests", () => {
       expect(res.status).toBe(201);
 
       const expiresAt = new Date(res.body.data.reservation.expiresAt);
-      const expectedExpiresAt = new Date(beforeCreate.getTime() + 15 * 60 * 1000);
+      const expectedExpiresAt = new Date(
+        beforeCreate.getTime() + 15 * 60 * 1000,
+      );
 
       // Allow 2 seconds tolerance
-      expect(Math.abs(expiresAt.getTime() - expectedExpiresAt.getTime())).toBeLessThan(2000);
+      expect(
+        Math.abs(expiresAt.getTime() - expectedExpiresAt.getTime()),
+      ).toBeLessThan(2000);
     });
   });
 
@@ -434,7 +440,9 @@ describe("Reservation API - Integration Tests", () => {
     });
 
     it("should return 401 if user is not authenticated", async () => {
-      const res = await request(app).get(`${reservationsUrl}/db92fd1d-6b87-45d5-9622-d0af7cf55322`);
+      const res = await request(app).get(
+        `${reservationsUrl}/db92fd1d-6b87-45d5-9622-d0af7cf55322`,
+      );
 
       expect(res.status).toBe(401);
     });
@@ -467,7 +475,9 @@ describe("Reservation API - Integration Tests", () => {
       const reservationId = createRes.body.data.reservation.id;
 
       // Verify reservedCount was increased
-      let updatedTicket = await TestDataSource.getRepository(TicketEntity).findOne({
+      let updatedTicket = await TestDataSource.getRepository(
+        TicketEntity,
+      ).findOne({
         where: { id: ticket.id },
       });
       expect(updatedTicket!.reservedCount).toBe(8); // 5 + 3
@@ -479,7 +489,9 @@ describe("Reservation API - Integration Tests", () => {
 
       expect(cancelRes.status).toBe(200);
       expect(cancelRes.body.status).toBe("success");
-      expect(cancelRes.body.data.reservation.status).toBe(ReservationStatus.CANCELED);
+      expect(cancelRes.body.data.reservation.status).toBe(
+        ReservationStatus.CANCELED,
+      );
 
       // Verify ticket capacity was released
       updatedTicket = await TestDataSource.getRepository(TicketEntity).findOne({
@@ -597,7 +609,9 @@ describe("Reservation API - Integration Tests", () => {
     });
 
     it("should return 401 if user is not authenticated", async () => {
-      const res = await request(app).patch(`${reservationsUrl}/db92fd1d-6b87-45d5-9622-d0af7cf55322/cancel`);
+      const res = await request(app).patch(
+        `${reservationsUrl}/db92fd1d-6b87-45d5-9622-d0af7cf55322/cancel`,
+      );
 
       expect(res.status).toBe(401);
     });
@@ -732,7 +746,9 @@ describe("Reservation API - Integration Tests", () => {
       expect(res.status).toBe(204);
 
       // Verify reservation is deleted
-      const deletedReservation = await TestDataSource.getRepository(Reservation).findOne({
+      const deletedReservation = await TestDataSource.getRepository(
+        Reservation,
+      ).findOne({
         where: { id: reservationId },
       });
       expect(deletedReservation).toBeNull();
@@ -792,14 +808,20 @@ describe("Reservation API - Integration Tests", () => {
       ]);
 
       // One should succeed and one should fail
-      const successCount = [res1.status, res2.status].filter((s) => s === 201).length;
-      const failCount = [res1.status, res2.status].filter((s) => s === 400).length;
+      const successCount = [res1.status, res2.status].filter(
+        (s) => s === 201,
+      ).length;
+      const failCount = [res1.status, res2.status].filter(
+        (s) => s === 400,
+      ).length;
 
       expect(successCount).toBe(1);
       expect(failCount).toBe(1);
 
       // Verify final reservedCount is 10
-      const updatedTicket = await TestDataSource.getRepository(TicketEntity).findOne({
+      const updatedTicket = await TestDataSource.getRepository(
+        TicketEntity,
+      ).findOne({
         where: { id: ticket.id },
       });
       expect(updatedTicket!.reservedCount).toBe(10);
@@ -844,7 +866,9 @@ describe("Reservation API - Integration Tests", () => {
       const reservationId = createRes.body.data.reservation.id;
 
       // Verify reservation is PENDING
-      expect(createRes.body.data.reservation.status).toBe(ReservationStatus.PENDING);
+      expect(createRes.body.data.reservation.status).toBe(
+        ReservationStatus.PENDING,
+      );
 
       // Create payment
       mockedAxios.post.mockResolvedValueOnce({
@@ -878,13 +902,15 @@ describe("Reservation API - Integration Tests", () => {
 
       // Verify payment
       const verifyRes = await request(app).get(
-        `/api/V1/payments/verify?Authority=AUTH_PAYMENT&Status=OK`
+        `/api/V1/payments/verify?Authority=AUTH_PAYMENT&Status=OK`,
       );
 
       expect(verifyRes.status).toBe(200);
 
       // Verify reservation is now CONFIRMED
-      const updatedReservation = await TestDataSource.getRepository(Reservation).findOne({
+      const updatedReservation = await TestDataSource.getRepository(
+        Reservation,
+      ).findOne({
         where: { id: reservationId },
       });
 

@@ -5,8 +5,9 @@
   "scripts": {
     "start:dev": "nodemon src/server.ts",
     "dev": "nodemon --watch src --ext ts --exec \"ts-node src/server.ts\"",
-    "build": "rimraf ./dist && tsc",
+    "build": "rimraf ./dist && tsc && npm run copy-swagger",
     "start": "node dist/server.js",
+    "copy-swagger": "cp -r src/swagger dist/src/swagger",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -61,6 +62,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
