@@ -169,6 +169,39 @@ export class PaymentService {
 
         await this.paymentRepository.savePayment(payment, manager);
 
+        // Expire the reservation when payment fails to release ticket capacity
+        const reservation = await this.reservationRepository.findByIdForUpdate(
+          payment.reservationId,
+          manager,
+        );
+
+        if (reservation && reservation.status === ReservationStatus.PENDING) {
+          reservation.status = ReservationStatus.EXPIRED;
+          await this.reservationRepository.saveReservation(reservation, manager);
+
+          // Release ticket capacity
+          const ticket = await this.ticketRepository.findByIdForUpdate(
+            reservation.ticketId,
+            manager,
+          );
+
+          if (ticket) {
+            ticket.reservedCount -= reservation.quantity;
+            if (ticket.reservedCount < 0) {
+              ticket.reservedCount = 0;
+            }
+            await this.ticketRepository.saveTicket(ticket, manager);
+          }
+
+          logger.info(
+            {
+              reservationId: reservation.id,
+              paymentId: payment.id,
+            },
+            "Reservation expired due to failed payment",
+          );
+        }
+
         logger.warn(
           {
             paymentId: payment.id,

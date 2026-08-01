@@ -5,8 +5,8 @@
   "scripts": {
     "start:dev": "nodemon src/server.ts",
     "dev": "nodemon --watch src --ext ts --exec \"ts-node src/server.ts\"",
-  "build": "rimraf ./dist && tsc",
-  "start": "node dist/server.js"
+    "build": "rimraf ./dist && tsc",
+    "start": "node dist/server.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
