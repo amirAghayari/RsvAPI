@@ -25,7 +25,7 @@ export const createRedisClient = (url?: string): RedisClientInstance => {
     },
   });
 
-  client.on("error", (err) => {
+  client.on("error", (err: unknown) => {
     logger.error({ err }, "Redis client error");
   });
 
