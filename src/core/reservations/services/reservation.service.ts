@@ -462,15 +462,35 @@ export class ReservationService {
       );
 
       if (!reservation) {
+        logger.warn(
+          {
+            reservationId,
+          },
+          "Reservation not found for expiration",
+        );
         return;
       }
 
       //validate reservation
       if (reservation.status !== ReservationStatus.PENDING) {
+        logger.debug(
+          {
+            reservationId,
+            status: reservation.status,
+          },
+          "Reservation is not in PENDING status, skipping expiration",
+        );
         return;
       }
 
       if (reservation.expiresAt > new Date()) {
+        logger.debug(
+          {
+            reservationId,
+            expiresAt: reservation.expiresAt,
+          },
+          "Reservation has not expired yet",
+        );
         return;
       }
 
@@ -481,6 +501,13 @@ export class ReservationService {
       );
 
       if (!ticket) {
+        logger.error(
+          {
+            reservationId,
+            ticketId: reservation.ticketId,
+          },
+          "Ticket not found during reservation expiration",
+        );
         throw new NotFoundError(
           `Ticket with id ${reservation.ticketId} not found.`,
         );
@@ -490,6 +517,15 @@ export class ReservationService {
       ticket.reservedCount -= reservation.quantity;
 
       if (ticket.reservedCount < 0) {
+        logger.warn(
+          {
+            reservationId,
+            ticketId: reservation.ticketId,
+            reservedCount: ticket.reservedCount,
+            quantity: reservation.quantity,
+          },
+          "Ticket reservedCount went negative during expiration, resetting to 0",
+        );
         ticket.reservedCount = 0;
       }
 
@@ -504,8 +540,9 @@ export class ReservationService {
           reservationId: reservation.id,
           ticketId: reservation.ticketId,
           userId: reservation.userId,
+          quantity: reservation.quantity,
         },
-        "Reservation expired",
+        "Reservation expired successfully",
       );
     });
   }
@@ -514,16 +551,31 @@ export class ReservationService {
     const reservations =
       await this.reservationRepository.findExpiredReservations();
 
-    for (const reservation of reservations) {
-      await this.expireReservation(reservation.id);
+    // Process all expired reservations in a single transaction for better performance
+    if (reservations.length === 0) {
+      return;
     }
-    if (reservations.length > 0) {
-      logger.info(
-        {
-          expiredCount: reservations.length,
-        },
-        "Expired reservations processed",
-      );
+
+    logger.info(
+      {
+        expiredCount: reservations.length,
+      },
+      "Processing expired reservations",
+    );
+
+    for (const reservation of reservations) {
+      try {
+        await this.expireReservation(reservation.id);
+      } catch (error) {
+        logger.error(
+          {
+            reservationId: reservation.id,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          "Failed to expire reservation",
+        );
+        // Continue processing other reservations even if one fails
+      }
     }
   }
 

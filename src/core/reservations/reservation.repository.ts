@@ -170,6 +170,7 @@ export class ReservationRepository {
       where: {
         userId,
         ticketId,
+        status: ReservationStatus.PENDING,
       },
     });
   }
