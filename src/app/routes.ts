@@ -16,6 +16,11 @@ const routes = (app: Express) => {
   // Swagger Ui route
   app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+  // Health check route
+  app.get("/health", (_req, res) => {
+    res.status(200).send("OK");
+  });
+
   // home route
   app.get("/", (_req, res) => {
     res.send("Ticket Reservation API is running");

@@ -1,34 +1,58 @@
 ```
+# Environment variables
+.env
+.env.local
+*.env.*
+
 # Dependencies
 node_modules/
-
-# Environment
-.env
-.env.test
-.env.local
-.env.*
 
 # Logs
 *.log
 
-# Coverage
+# Coverage reports
 coverage/
 htmlcov/
 .coverage
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage*
+.nocoverage*
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing
+.pytest_cache/
+.hypothesis/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*.tmp
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Build outputs
-dist/
-build/
-target/
+# Docker
+.dockerenv
+!docker-compose.yml
+!Dockerfile
 ```
