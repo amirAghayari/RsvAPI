@@ -16,15 +16,10 @@ services:
       NODE_ENV: production
 
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - redis
 
     restart: unless-stopped
-
-    networks:
-      - ticket-network
 
   postgres:
     image: postgres:17-alpine
@@ -44,16 +39,6 @@ services:
 
     restart: unless-stopped
 
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-    networks:
-      - ticket-network
-
   redis:
     image: redis:8-alpine
 
@@ -64,19 +49,5 @@ services:
 
     restart: unless-stopped
 
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 5s
-
-    networks:
-      - ticket-network
-
 volumes:
   postgres_data:
-
-networks:
-  ticket-network:
-    driver: bridge

@@ -9,11 +9,5 @@ coverage
 .idea
 
 .env
-.env.local
 
-*.md
-!README.md
-
-tests
-jest.config.ts
-tsconfig.json
+README.md
