@@ -14,6 +14,7 @@ services:
 
     environment:
       NODE_ENV: production
+      IS_DOCKER: "true"
 
     depends_on:
       - postgres

@@ -42,6 +42,7 @@ describe("Reservation API - Integration Tests", () => {
           ticketId: ticket.id,
           quantity: 2,
         });
+      console.error(res.body);
 
       expect(res.status).toBe(201);
       expect(res.body.status).toBe("success");
