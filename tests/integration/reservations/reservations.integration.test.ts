@@ -42,8 +42,7 @@ describe("Reservation API - Integration Tests", () => {
           ticketId: ticket.id,
           quantity: 2,
         });
-      console.error(res.body);
-
+      process.stderr.write(JSON.stringify(res.body, null, 2));
       expect(res.status).toBe(201);
       expect(res.body.status).toBe("success");
       expect(res.body.data.reservation).toBeDefined();
@@ -239,10 +238,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Create first reservation
@@ -274,10 +281,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       const beforeCreate = new Date();
@@ -311,10 +326,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Create a reservation
@@ -350,10 +373,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user1.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // User1 creates a reservation
@@ -401,10 +432,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Create a reservation
@@ -456,12 +495,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
         capacity: 20,
         reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Create a reservation
@@ -507,10 +552,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Create a reservation
@@ -572,10 +625,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: owner.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Owner creates a reservation
@@ -627,10 +688,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Create a reservation
@@ -719,16 +788,22 @@ describe("Reservation API - Integration Tests", () => {
       const admin = await authenticateAdmin();
 
       const user = await authRequest();
-
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
-
       // Create a reservation
       const createRes = await request(app)
         .post(reservationsUrl)
@@ -786,14 +861,18 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user1.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
-      // Create a ticket with only 1 capacity left
       const ticket = await createTicket({
         eventId: event.id,
+        price: 150,
         capacity: 10,
         reservedCount: 9,
         maxPerUser: 1,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
 
       // Both users try to reserve at the same time
@@ -848,13 +927,19 @@ describe("Reservation API - Integration Tests", () => {
       const event = await createEvent({
         userId: user.user.id,
         status: EventStatus.PUBLISHED,
+        startsAt: new Date(Date.now() + 100000),
+        endsAt: new Date(Date.now() + 200000),
       });
 
       const ticket = await createTicket({
         eventId: event.id,
-        price: 200,
+        price: 150,
+        capacity: 20,
+        reservedCount: 5,
+        maxPerUser: 3,
+        saleStartsAt: new Date(),
+        saleEndsAt: new Date(Date.now() + 200000),
       });
-
       // Create reservation
       const createRes = await request(app)
         .post(reservationsUrl)
