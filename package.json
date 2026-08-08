@@ -9,6 +9,7 @@
     "start": "node dist/server.js",
     "copy-swagger": "cp -r src/swagger dist/src/swagger",
     "test": "jest",
+    "test:integration": "jest --config jest.integration.config.ts",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "migrate:generate": "typeorm-ts-node-esm migration:generate src/migrations/init -d src/config/dataSource.ts",
