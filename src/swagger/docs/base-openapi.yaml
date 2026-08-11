@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  title: Ticket Express - User, Auth & Event API
+  version: 1.0.0
+  description: |
+    Complete API documentation for the Ticket Express project.
+
+    This base document contains the shared OpenAPI metadata, server configuration, and common security scheme used across all module-specific docs.
+
+servers:
+  - url: http://localhost:3000/api/V1
+    description: Local development server
+  - url: https://{host}/api/V1
+    description: Production server
+    variables:
+      host:
+        default: example.com
+        description: Base URL for the production environment
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token should be sent in the Authorization header as Bearer <token>.

@@ -1,0 +1,54 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ticket-api
+
+    ports:
+      - "3000:3000"
+
+    env_file:
+      - .env
+
+    environment:
+      NODE_ENV: production
+      IS_DOCKER: "true"
+
+    depends_on:
+      - postgres
+      - redis
+
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+
+    container_name: ticket-db
+
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    restart: unless-stopped
+
+  redis:
+    image: redis:8-alpine
+
+    container_name: ticket-redis
+
+    ports:
+      - "6379:6379"
+
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

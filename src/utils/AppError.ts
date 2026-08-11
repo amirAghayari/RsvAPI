@@ -1,7 +1,14 @@
-export class AppError extends Error {
-  statusCode: number;
-  constructor(message: string, statusCode: number) {
+export abstract class AppError extends Error {
+  constructor(message: string) {
     super(message);
-    this.statusCode = statusCode;
+
+    // because we are extending a built-in class
+    Object.setPrototypeOf(this, AppError.prototype);
   }
+
+  abstract statusCode: number;
+  abstract serializeErrors: () => {
+    field: string | null;
+    message: string;
+  }[];
 }

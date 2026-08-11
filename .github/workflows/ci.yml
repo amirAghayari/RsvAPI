@@ -1,0 +1,98 @@
+# name: CI
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+#   pull_request:
+#     branches:
+#       - main
+
+# permissions:
+#   contents: read
+#   packages: write
+
+#   # cancel in-progress runs of the same workflow for the same ref (branch or tag) : cancel first when the second is triggered, and the second will run. This is useful for PRs where you only want to run the latest commit.
+# concurrency:
+#   group: ci-${{ github.ref }}
+#   cancel-in-progress: true
+
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+
+#     services:
+#       postgres:
+#         image: postgres:17-alpine
+#         env:
+#           POSTGRES_USER: postgres
+#           POSTGRES_PASSWORD: password
+#           POSTGRES_DB: ticket_express_test
+#         ports:
+#           - 5432:5432
+#         options: >-
+#           --health-cmd="pg_isready -U postgres -d ticket_express_test"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=5
+
+#       redis:
+#         image: redis:8-alpine
+#         ports:
+#           - 6379:6379
+#         options: >-
+#           --health-cmd="redis-cli ping"
+#           --health-interval=10s
+#           --health-timeout=5s
+#           --health-retries=5
+
+#     env:
+#       NODE_ENV: test
+#       TEST_DB_HOST: localhost
+#       TEST_DB_PORT: 5432
+#       TEST_DB_USERNAME: postgres
+#       TEST_DB_PASSWORD: password
+#       TEST_DB_NAME: ticket_express_test
+#       REDIS_HOST: localhost
+#       REDIS_PORT: 6379
+
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: 22
+#           cache: npm
+
+#       - name: Install dependencies
+#         run: npm ci
+
+#       - name: Build
+#         run: npm run build
+
+#       - name: Integration tests
+#         run: npm run test:integration
+
+#       - name: Login to GHCR
+#         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#         uses: docker/login-action@v3
+#         with:
+#           registry: ghcr.io
+#           username: ${{ github.actor }}
+#           password: ${{ secrets.GITHUB_TOKEN }}
+
+#       - name: Build Docker image
+#         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#         run: |
+#           docker build \
+#             -t ghcr.io/${{ github.repository }}:${{ github.sha }} \
+#             .
+
+#       - name: Push Docker image
+#         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+#         run: |
+#           docker push \
+#             ghcr.io/${{ github.repository }}:${{ github.sha }}

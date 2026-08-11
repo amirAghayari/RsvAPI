@@ -18,13 +18,21 @@ const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET as jwt.Secret;
 const ACCESS_EXPIRES_IN = process.env.ACCESS_TOKEN_EXPIRES_IN || "15m";
 const REFRESH_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || "7d";
 
-export function signAccessToken(payload: { userId: string }) {
+export function signAccessToken(payload: {
+  userId: string;
+  role: "user" | "admin";
+  email?: string;
+}) {
   return jwt.sign(payload, ACCESS_SECRET, {
     expiresIn: ACCESS_EXPIRES_IN as SignOptions["expiresIn"],
   });
 }
 
-export function signRefreshToken(payload: { userId: string }) {
+export function signRefreshToken(payload: {
+  userId: string;
+  role: "user" | "admin";
+  email?: string;
+}) {
   return jwt.sign(payload, REFRESH_SECRET, {
     expiresIn: REFRESH_EXPIRES_IN as SignOptions["expiresIn"],
   });
