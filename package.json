@@ -7,7 +7,7 @@
     "dev": "nodemon --watch src --ext ts --exec \"ts-node src/server.ts\"",
     "build": "rimraf ./dist && tsc && npm run copy-swagger",
     "start": "node dist/server.js",
-    "copy-swagger": "cp -r src/swagger dist/src/swagger",
+    "copy-swagger": "node -e \"require('fs').cpSync('src/swagger', 'dist/src/swagger', { recursive: true })\"",
     "test": "jest",
     "test:integration": "jest --config jest.integration.config.ts",
     "test:watch": "jest --watch",

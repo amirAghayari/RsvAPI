@@ -24,7 +24,7 @@ export class EventController {
   }
 
   async findEventById(req: Request, res: Response) {
-    const event = await this.eventService.getEventById(req.params.id);
+    const event = await this.eventService.getEventById(req.params.id as string);
     res.status(200).json({
       status: "success",
       data: { event },
@@ -50,7 +50,7 @@ export class EventController {
    ******************************************************/
   async updateEvent(req: Request, res: Response) {
     const updatedEvent = await this.eventService.updateEvent(
-      req.params.id,
+      req.params.id as string,
       req.body as IUpdateEventDto,
       req.user.id,
       req.user.role,
@@ -68,7 +68,7 @@ export class EventController {
 
   async deleteEvent(req: Request, res: Response) {
     await this.eventService.deleteEvent(
-      req.params.id,
+      req.params.id as string,
       req.user.id,
       req.user.role,
     );

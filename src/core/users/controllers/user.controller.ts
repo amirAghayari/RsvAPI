@@ -61,7 +61,7 @@ export class UserController {
   }
 
   async findUserById(req: Request, res: Response): Promise<void> {
-    const user = await this.userService.findUserById(req.params.id);
+    const user = await this.userService.findUserById(req.params.id as string);
     res.status(200).json({
       status: "success",
       data: {
@@ -96,7 +96,7 @@ export class UserController {
 
   async updateUser(req: Request, res: Response): Promise<void> {
     const user = await this.userService.updateUser(
-      req.params.id,
+      req.params.id as string,
       req.body as IUpdateUserDto,
     );
     res.status(200).json({
@@ -145,7 +145,7 @@ export class UserController {
    *********************************************************/
 
   async deleteUser(req: Request, res: Response): Promise<void> {
-    await this.userService.deleteUser(req.params.id, req.user);
+    await this.userService.deleteUser(req.params.id as string, req.user);
     res.status(204).json({
       status: "success",
       data: null,

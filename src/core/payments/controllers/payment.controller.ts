@@ -25,7 +25,7 @@ export class PaymentController {
   }
 
   async getPaymentById(req: Request, res: Response) {
-    const payment = await this.paymentService.getPaymentById(req.params.id);
+    const payment = await this.paymentService.getPaymentById(req.params.id as string);
 
     res.status(200).json({
       status: "success",
@@ -88,7 +88,7 @@ export class PaymentController {
    ******************************************************/
 
   async deletePayment(req: Request, res: Response) {
-    await this.paymentService.deletePayment(req.params.id);
+    await this.paymentService.deletePayment(req.params.id as string);
 
     res.status(204).json({
       status: "success",

@@ -38,7 +38,7 @@ export class ReservationController {
 
   async getReservationById(req: Request, res: Response) {
     const reservation = await this.reservationService.getReservationById(
-      req.params.id,
+      req.params.id as string,
     );
 
     res.status(200).json({
@@ -93,7 +93,7 @@ export class ReservationController {
 
   async cancelReservation(req: Request, res: Response) {
     const reservation = await this.reservationService.cancelReservation(
-      req.params.id,
+      req.params.id as string,
       req.user.id,
     );
 
@@ -110,7 +110,7 @@ export class ReservationController {
    *************************************************************/
 
   async deleteReservation(req: Request, res: Response) {
-    await this.reservationService.deleteReservation(req.params.id);
+    await this.reservationService.deleteReservation(req.params.id as string);
     res.status(204).json({
       status: "success",
       data: null,
