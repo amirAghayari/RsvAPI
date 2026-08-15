@@ -1,6 +1,6 @@
-# Ticket Express
+# ResAPI - Event ticketing API
 
-**Ticket Express** is a RESTful event ticketing backend built with Node.js, TypeScript, Express, and PostgreSQL.
+**ResAPI** is a RESTful event ticketing backend built with Node.js, TypeScript, Express, and PostgreSQL.
 
 ![CI](https://img.shields.io/badge/ci-pending-lightgrey)
 ![Coverage](https://img.shields.io/badge/coverage-pending-lightgrey)
